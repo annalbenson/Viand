@@ -32,6 +32,14 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        /* login */
+
+        Intent intent = new Intent(mainActivity,LoginActivity.class);
+        startActivity(intent);
+
+        /* use return values of login to open User, Shopper, or Store Activities */
+
+        /*
         recyclerView = findViewById(R.id.recycler);
         storeAdapter = new StoreAdapter(storeList,this);
 
@@ -43,7 +51,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         storeAdapter.notifyDataSetChanged();
-
+        */
 
     }
 
