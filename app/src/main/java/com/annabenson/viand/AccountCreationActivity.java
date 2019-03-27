@@ -15,6 +15,10 @@ import java.util.ArrayList;
 public class AccountCreationActivity extends AppCompatActivity {
 
     private static final String TAG = "AccountCreationActivity";
+    private AccountCreationActivity accountCreationActivity = this;
+
+    Intent intent;
+    DatabaseHandler databaseHandler;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -22,7 +26,11 @@ public class AccountCreationActivity extends AppCompatActivity {
 
         /* check what kind of account */
 
-        Intent intent = this.getIntent();
+        intent = this.getIntent();
+
+        Bundle bundle = intent.getExtras();
+        databaseHandler = (DatabaseHandler) bundle.getSerializable("Database");
+
         String accountType = intent.getStringExtra("AccountType");
         if(accountType.equals("User")){
             Log.d(TAG, "onCreate: User");
@@ -39,17 +47,16 @@ public class AccountCreationActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     /* save to database */
-
-
-
-                    /* pass UserAccount object to MainActivity */
-                    new UserAccount(email.getText().toString(),
+                    UserAccount userAccount =new UserAccount(email.getText().toString(),
                             password.getText().toString(),
                             phoneNumber.getText().toString(),
                             new ArrayList<Order>(),
                             firstName.getText().toString(),
                             lastName.getText().toString()
                             );
+                    databaseHandler.addUserAccount(userAccount);
+                    /* pass UserAccount object to MainActivity */
+                    intent = new Intent(accountCreationActivity,MainActivity.class);
                 }
             });
 

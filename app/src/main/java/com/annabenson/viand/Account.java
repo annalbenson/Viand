@@ -1,8 +1,9 @@
 package com.annabenson.viand;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public abstract class Account {
+public abstract class Account implements Serializable {
 
     private String email; // login credential
     private String password; // login credential

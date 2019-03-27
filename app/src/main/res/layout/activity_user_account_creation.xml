@@ -12,6 +12,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:text="New User Account"
+        android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@+id/guideline5"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -54,7 +55,6 @@
             android:ems="10"
             android:hint="First Name"
             android:inputType="textPersonName"
-            android:text="Name"
             tools:layout_editor_absoluteX="72dp"
             tools:layout_editor_absoluteY="67dp" />
 
@@ -65,7 +65,6 @@
             android:ems="10"
             android:hint="Last Name"
             android:inputType="textPersonName"
-            android:text="Name"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.363"
             app:layout_constraintStart_toStartOf="parent"
@@ -86,6 +85,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:hint="Email"
             android:inputType="textEmailAddress"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -96,6 +96,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:hint="Password"
             android:inputType="textPassword"
             tools:layout_editor_absoluteX="160dp"
             tools:layout_editor_absoluteY="356dp" />

@@ -46,6 +46,9 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Log.d(TAG, "onClick: create account button pressed");
                 intent = new Intent(loginActivity,AccountCreationActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("Database", databaseHandler);
+                intent.putExtras(bundle);
                 accountCreationDialog();
             }
         });
@@ -56,17 +59,13 @@ public class LoginActivity extends AppCompatActivity {
                 Log.d(TAG, "onClick: login button pressed");
                 String inputEmail = email.getText().toString();
                 String inputPassword = password.getText().toString();
-                UserAccount userAccount = databaseHandler.loadAccount(inputEmail,inputPassword);
+                UserAccount userAccount = databaseHandler.loadUserAccount(inputEmail,inputPassword);
                 if( userAccount != null){
-                    intent.putExtra(UserAccount);
                     intent = new Intent(loginActivity,MainActivity.class);
-                }
-                if (databaseHandler.inDatabase(inputEmail,inputPassword)){
-                    /* TODO : load Account Object from database and pass to Main Activity */
-
-
-
-
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable("UserAccount", userAccount);
+                    intent.putExtras(bundle);
+                    startActivity(intent);
                 }
                 else{
                     Toast.makeText(view.getContext(), "Invalid login",Toast.LENGTH_SHORT).show();
