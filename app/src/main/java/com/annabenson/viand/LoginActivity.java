@@ -11,12 +11,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    private LoginActivity loginActivity = this;
 
     private Button createButton; Button loginButton;
     private TextView email; TextView password;
@@ -24,6 +26,8 @@ public class LoginActivity extends AppCompatActivity {
     private String [] dialogOptions = {"User","Shopper","Store"};
 
     private Intent intent;
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,6 +43,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Log.d(TAG, "onClick: create account button pressed");
+                intent = new Intent(loginActivity,AccountCreationActivity.class);
                 accountCreationDialog();
             }
         });
@@ -49,7 +54,15 @@ public class LoginActivity extends AppCompatActivity {
                 Log.d(TAG, "onClick: login button pressed");
                 String inputEmail = email.getText().toString();
                 String inputPassword = password.getText().toString();
+                if (testLogin(inputEmail,inputPassword)){
+                    /* TODO : load Account Object from database and pass to Main Activity */
 
+
+                    intent = new Intent(loginActivity,MainActivity.class);
+                }
+                else{
+                    Toast.makeText(view.getContext(), "Invalid login",Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -59,27 +72,28 @@ public class LoginActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         builder.setTitle("Account Type");
-        builder.setMessage("Select the type of account you would like to create");
-        builder.setSingleChoiceItems(dialogOptions, -1, new DialogInterface.OnClickListener() {
+        //builder.setMessage("Select the type of account you would like to create");
+
+        final String [] options = {"User","Shopper","Store"};
+
+        builder.setItems(options, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                switch (i){
-                    case 0:
-                        intent.putExtra("type","user");
-                        break;
-                    case 1:
-                        intent.putExtra("type","shopper");
-                        break;
-                    case 2:
-                        intent.putExtra("type","store");
-                        break;
-
-                }
+                intent.putExtra("AccountType",options[i]);
+                startActivity(intent);
             }
         });
 
         AlertDialog dialog = builder.create();
         dialog.show();
 
+    }
+
+    public boolean testLogin(String email, String password){
+        // check database
+
+        // return
+
+        return false;
     }
 }

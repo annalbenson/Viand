@@ -5,6 +5,12 @@ import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+
+import java.util.ArrayList;
 
 public class AccountCreationActivity extends AppCompatActivity {
 
@@ -17,18 +23,41 @@ public class AccountCreationActivity extends AppCompatActivity {
         /* check what kind of account */
 
         Intent intent = this.getIntent();
-        String accountType = intent.getStringExtra("accountType");
-        if(accountType.equals("user")){
+        String accountType = intent.getStringExtra("AccountType");
+        if(accountType.equals("User")){
+            Log.d(TAG, "onCreate: User");
             setContentView(R.layout.activity_user_account_creation);
 
-            /* setup views */
+            final EditText firstName = findViewById(R.id.firstNameID);
+            final EditText lastName = findViewById(R.id.lastNameID);
+            final EditText phoneNumber = findViewById(R.id.phoneNumberID);
+            final EditText email = findViewById(R.id.emailID);
+            final EditText password = findViewById(R.id.passwordID);
+            final Button button = findViewById(R.id.button);
 
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    /* save to database */
+
+                    /* pass UserAccount object to MainActivity */
+                    new UserAccount(email.getText().toString(),
+                            password.getText().toString(),
+                            phoneNumber.getText().toString(),
+                            new ArrayList<Order>(),
+                            firstName.getText().toString(),
+                            lastName.getText().toString()
+                            );
+                }
+            });
 
         }
-        else if(accountType.equals("shopper")){
-            //setContentView(R.layout.activity_shopper_account_creation);
+        else if(accountType.equals("Shopper")){
+            Log.d(TAG, "onCreate: Shopper");
+            setContentView(R.layout.activity_shopper_account_creation);
         }
-        else if(accountType.equals("store")){
+        else if(accountType.equals("Store")){
+            Log.d(TAG, "onCreate: Store");
             //setContentView(R.layout.activity_store_account_creation);
         }
 
