@@ -40,6 +40,8 @@ public class AccountCreationActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     /* save to database */
 
+
+
                     /* pass UserAccount object to MainActivity */
                     new UserAccount(email.getText().toString(),
                             password.getText().toString(),

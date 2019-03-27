@@ -27,6 +27,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private Intent intent;
 
+    private DatabaseHandler databaseHandler;
+
 
 
     @Override
@@ -54,11 +56,17 @@ public class LoginActivity extends AppCompatActivity {
                 Log.d(TAG, "onClick: login button pressed");
                 String inputEmail = email.getText().toString();
                 String inputPassword = password.getText().toString();
-                if (testLogin(inputEmail,inputPassword)){
+                UserAccount userAccount = databaseHandler.loadAccount(inputEmail,inputPassword);
+                if( userAccount != null){
+                    intent.putExtra(UserAccount);
+                    intent = new Intent(loginActivity,MainActivity.class);
+                }
+                if (databaseHandler.inDatabase(inputEmail,inputPassword)){
                     /* TODO : load Account Object from database and pass to Main Activity */
 
 
-                    intent = new Intent(loginActivity,MainActivity.class);
+
+
                 }
                 else{
                     Toast.makeText(view.getContext(), "Invalid login",Toast.LENGTH_SHORT).show();
@@ -66,13 +74,14 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+        databaseHandler = new DatabaseHandler(this);
+
     }
 
     public void accountCreationDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         builder.setTitle("Account Type");
-        //builder.setMessage("Select the type of account you would like to create");
 
         final String [] options = {"User","Shopper","Store"};
 
@@ -89,11 +98,5 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    public boolean testLogin(String email, String password){
-        // check database
 
-        // return
-
-        return false;
-    }
 }
