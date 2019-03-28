@@ -17,7 +17,7 @@ import org.w3c.dom.Text;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "LoginActivity";
     private LoginActivity loginActivity = this;
 
     private Button createButton; Button loginButton;
@@ -29,26 +29,24 @@ public class LoginActivity extends AppCompatActivity {
 
     private DatabaseHandler databaseHandler;
 
-
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        /* views */
         createButton = findViewById(R.id.createButtonID);
         email = findViewById(R.id.emailID);
         password = findViewById(R.id.passwordID);
         loginButton = findViewById(R.id.loginID);
 
+        /* database */
+        databaseHandler = new DatabaseHandler(this);
+
         createButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Log.d(TAG, "onClick: create account button pressed");
-                intent = new Intent(loginActivity,AccountCreationActivity.class);
-                Bundle bundle = new Bundle();
-                bundle.putSerializable("Database", databaseHandler);
-                intent.putExtras(bundle);
                 accountCreationDialog();
             }
         });
@@ -73,21 +71,26 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        databaseHandler = new DatabaseHandler(this);
 
     }
 
     public void accountCreationDialog(){
+        /* called by createButton on click listener */
+
+        intent = new Intent(loginActivity,AccountCreationActivity.class);
+        //Bundle bundle = new Bundle();
+        //bundle.putSerializable("Database", databaseHandler);
+        //intent.putExtras(bundle);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
         builder.setTitle("Account Type");
-
         final String [] options = {"User","Shopper","Store"};
 
         builder.setItems(options, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                intent.putExtra("AccountType",options[i]);
+                String choice = options[i];
+                intent.putExtra("AccountType",choice);
                 startActivity(intent);
             }
         });

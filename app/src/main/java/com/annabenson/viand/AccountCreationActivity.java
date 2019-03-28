@@ -28,8 +28,8 @@ public class AccountCreationActivity extends AppCompatActivity {
 
         intent = this.getIntent();
 
-        Bundle bundle = intent.getExtras();
-        databaseHandler = (DatabaseHandler) bundle.getSerializable("Database");
+        //Bundle bundle = intent.getExtras();
+        //databaseHandler = (DatabaseHandler) bundle.getSerializable("Database");
 
         String accountType = intent.getStringExtra("AccountType");
         if(accountType.equals("User")){
@@ -43,11 +43,12 @@ public class AccountCreationActivity extends AppCompatActivity {
             final EditText password = findViewById(R.id.passwordID);
             final Button button = findViewById(R.id.button);
 
+            /*
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    /* save to database */
-                    UserAccount userAccount =new UserAccount(email.getText().toString(),
+                    /* save to database
+                    UserAccount userAccount = new UserAccount(email.getText().toString(),
                             password.getText().toString(),
                             phoneNumber.getText().toString(),
                             new ArrayList<Order>(),
@@ -55,10 +56,11 @@ public class AccountCreationActivity extends AppCompatActivity {
                             lastName.getText().toString()
                             );
                     databaseHandler.addUserAccount(userAccount);
-                    /* pass UserAccount object to MainActivity */
+                    /* pass UserAccount object to MainActivity //
                     intent = new Intent(accountCreationActivity,MainActivity.class);
                 }
             });
+        */
 
         }
         else if(accountType.equals("Shopper")){
