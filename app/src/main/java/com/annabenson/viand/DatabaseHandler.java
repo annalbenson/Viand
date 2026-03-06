@@ -64,20 +64,19 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         Log.d(TAG, "addAccount: ");
         ContentValues values = new ContentValues();
 
-        values.put(EMAIL,account.getEmail());
-        values.put(PASSWORD,account.getPassword());
-        values.put(PHONE,account.getPassword());
-        values.put(FIRST_NAME,account.getFirstName());
+        values.put(EMAIL, account.getEmail());
+        values.put(PASSWORD, account.getPassword());
+        values.put(PHONE, account.getPhoneNumber());
+        values.put(FIRST_NAME, account.getFirstName());
+        values.put(LAST_NAME, account.getLastName());
 
-        long key = database.insert(TABLE_ACCOUNTS,null,values);
-
+        long key = database.insertWithOnConflict(TABLE_ACCOUNTS, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
     public UserAccount loadUserAccount(String email, String password){
         String select = "SELECT * FROM " + TABLE_ACCOUNTS +
-                " WHERE " + EMAIL + "='" + email + "' and " + PASSWORD + "='"
-                + password + "'; " ;
-        Cursor cursor = database.rawQuery(select,null);
+                " WHERE " + EMAIL + "=? AND " + PASSWORD + "=?";
+        Cursor cursor = database.rawQuery(select, new String[]{email, password});
         if(cursor != null && cursor.getCount() == 1 ) { // cursor exists and there's only one account
             cursor.moveToFirst(); // imp
             String savedEmail = cursor.getString(0);
