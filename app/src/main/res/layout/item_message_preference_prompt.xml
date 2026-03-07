@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="48dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bubble_ai"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/promptText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:paddingBottom="10dp" />
+
+    <LinearLayout
+        android:id="@+id/promptButtonsContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnOften"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Often"
+            android:layout_marginEnd="4dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+        <Button
+            android:id="@+id/btnSometimes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sometimes"
+            android:layout_marginEnd="4dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+        <Button
+            android:id="@+id/btnRarely"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rarely"
+            android:layout_marginEnd="4dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+        <Button
+            android:id="@+id/btnNever"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Never"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/promptResponseText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Got it! I&#8217;ll keep that in mind."
+        android:textSize="13sp"
+        android:textStyle="italic"
+        android:visibility="gone" />
+
+</LinearLayout>

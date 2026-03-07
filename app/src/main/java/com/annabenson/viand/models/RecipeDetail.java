@@ -17,6 +17,12 @@ public class RecipeDetail {
     @SerializedName("summary")
     private String summary;
 
+    @SerializedName("dishTypes")
+    private List<String> dishTypes;
+
+    @SerializedName("cuisines")
+    private List<String> cuisines;
+
     @SerializedName("extendedIngredients")
     private List<Ingredient> extendedIngredients;
 
@@ -27,6 +33,8 @@ public class RecipeDetail {
     public String getTitle() { return title; }
     public String getImage() { return image; }
     public String getSummary() { return summary; }
+    public List<String> getDishTypes() { return dishTypes; }
+    public List<String> getCuisines() { return cuisines; }
     public List<Ingredient> getExtendedIngredients() { return extendedIngredients; }
     public List<AnalyzedInstruction> getAnalyzedInstructions() { return analyzedInstructions; }
 

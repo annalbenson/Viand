@@ -1,9 +1,11 @@
 package com.annabenson.viand.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -28,6 +30,8 @@ import retrofit2.Response;
 
 public class RecipeDetailActivity extends AppCompatActivity {
 
+    private static final String TAG = "RecipeDetailActivity";
+
     private ImageView detailImage;
     private TextView detailTitle;
     private LinearLayout ingredientsContainer;
@@ -40,6 +44,8 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
     private int recipeId;
     private RecipeDetail currentDetail;
+    private boolean fromRecommendation;
+    private String userEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,17 +60,16 @@ public class RecipeDetailActivity extends AppCompatActivity {
         createMyVersionButton = findViewById(com.annabenson.viand.R.id.createMyVersionButton);
 
         ImageButton backButton = findViewById(com.annabenson.viand.R.id.backButton);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        backButton.setOnClickListener(v -> finish());
 
         databaseHandler = new DatabaseHandler(this);
         spoonacularService = RetrofitClient.getInstance().create(SpoonacularService.class);
+        userEmail = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
+                .getString(LoginActivity.KEY_EMAIL, "");
 
         recipeId = getIntent().getIntExtra("RECIPE_ID", -1);
+        fromRecommendation = getIntent().getBooleanExtra("FROM_RECOMMENDATION", false);
+
         String recipeTitle = getIntent().getStringExtra("RECIPE_TITLE");
         if (recipeTitle != null) {
             detailTitle.setText(recipeTitle);
@@ -77,33 +82,33 @@ public class RecipeDetailActivity extends AppCompatActivity {
             finish();
         }
 
-        saveToFavoritesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentDetail != null) {
-                    databaseHandler.addFavorite(
-                            currentDetail.getId(),
-                            currentDetail.getTitle(),
-                            currentDetail.getImage()
-                    );
-                    Toast.makeText(RecipeDetailActivity.this,
-                            "Saved to favorites!", Toast.LENGTH_SHORT).show();
-                    saveToFavoritesButton.setEnabled(false);
-                    saveToFavoritesButton.setText("Saved");
-                }
+        saveToFavoritesButton.setOnClickListener(v -> {
+            if (currentDetail != null) {
+                String mealType = detectMealType(currentDetail.getDishTypes());
+                databaseHandler.addFavorite(
+                        currentDetail.getId(),
+                        currentDetail.getTitle(),
+                        currentDetail.getImage(),
+                        mealType
+                );
+
+                // Award +1 per cuisine, +0.5 per ingredient (top 5)
+                awardTastePointsOnSave(currentDetail);
+
+                Toast.makeText(RecipeDetailActivity.this,
+                        "Saved to favorites!", Toast.LENGTH_SHORT).show();
+                saveToFavoritesButton.setEnabled(false);
+                saveToFavoritesButton.setText("Saved");
             }
         });
 
-        createMyVersionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentDetail != null) {
-                    Intent intent = new Intent(RecipeDetailActivity.this, CustomRecipeActivity.class);
-                    intent.putExtra("CUSTOM_TITLE", currentDetail.getTitle());
-                    intent.putExtra("CUSTOM_INGREDIENTS", buildIngredientsText(currentDetail));
-                    intent.putExtra("CUSTOM_INSTRUCTIONS", buildInstructionsText(currentDetail));
-                    startActivity(intent);
-                }
+        createMyVersionButton.setOnClickListener(v -> {
+            if (currentDetail != null) {
+                Intent intent = new Intent(RecipeDetailActivity.this, CustomRecipeActivity.class);
+                intent.putExtra("CUSTOM_TITLE", currentDetail.getTitle());
+                intent.putExtra("CUSTOM_INGREDIENTS", buildIngredientsText(currentDetail));
+                intent.putExtra("CUSTOM_INSTRUCTIONS", buildInstructionsText(currentDetail));
+                startActivity(intent);
             }
         });
     }
@@ -117,6 +122,14 @@ public class RecipeDetailActivity extends AppCompatActivity {
                         if (response.isSuccessful() && response.body() != null) {
                             currentDetail = response.body();
                             populateUI(currentDetail);
+
+                            // Award taste points for opening from recommendation
+                            if (fromRecommendation && currentDetail.getCuisines() != null) {
+                                for (String cuisine : currentDetail.getCuisines()) {
+                                    Log.d(TAG, "Recommendation open: +0.5 for " + cuisine);
+                                    databaseHandler.upsertTasteScore(userEmail, cuisine, "cuisine", 0.5f);
+                                }
+                            }
                         } else {
                             Toast.makeText(RecipeDetailActivity.this,
                                     "Failed to load recipe: " + response.code(),
@@ -131,6 +144,26 @@ public class RecipeDetailActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void awardTastePointsOnSave(RecipeDetail detail) {
+        // +1 per cuisine
+        if (detail.getCuisines() != null) {
+            for (String cuisine : detail.getCuisines()) {
+                Log.d(TAG, "Save: +1 for cuisine " + cuisine);
+                databaseHandler.upsertTasteScore(userEmail, cuisine, "cuisine", 1f);
+            }
+        }
+        // +0.5 per ingredient (top 5)
+        List<Ingredient> ingredients = detail.getExtendedIngredients();
+        if (ingredients != null) {
+            int limit = Math.min(5, ingredients.size());
+            for (int i = 0; i < limit; i++) {
+                String ingredientName = ingredients.get(i).getName();
+                Log.d(TAG, "Save: +0.5 for ingredient " + ingredientName);
+                databaseHandler.upsertTasteScore(userEmail, ingredientName, "ingredient", 0.5f);
+            }
+        }
     }
 
     private void populateUI(RecipeDetail detail) {
@@ -192,6 +225,21 @@ public class RecipeDetailActivity extends AppCompatActivity {
             return stripHtml(detail.getSummary());
         }
         return sb.toString().trim();
+    }
+
+    private static String detectMealType(List<String> dishTypes) {
+        if (dishTypes == null || dishTypes.isEmpty()) return "Other";
+        for (String dt : dishTypes) {
+            String lower = dt.toLowerCase();
+            if (lower.contains("breakfast") || lower.contains("brunch")) return "Breakfast";
+            if (lower.contains("lunch"))                                  return "Lunch";
+            if (lower.contains("dinner") || lower.equals("main course")
+                    || lower.equals("main dish"))                         return "Dinner";
+            if (lower.contains("dessert"))                                return "Dessert";
+            if (lower.contains("snack") || lower.contains("appetizer")
+                    || lower.contains("side"))                            return "Snack";
+        }
+        return "Other";
     }
 
     @SuppressWarnings("deprecation")

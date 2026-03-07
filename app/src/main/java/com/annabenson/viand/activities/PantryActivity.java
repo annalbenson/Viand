@@ -1,13 +1,16 @@
 package com.annabenson.viand.activities;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
-import android.util.Log;
 import android.widget.Toast;
+
 import java.io.IOException;
+import java.util.Random;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -15,8 +18,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.annabenson.viand.BuildConfig;
 import com.annabenson.viand.adapters.ChatAdapter;
+import com.annabenson.viand.data.DatabaseHandler;
+import com.annabenson.viand.engine.TasteEngine;
 import com.annabenson.viand.models.ChatMessage;
 import com.annabenson.viand.models.Recipe;
+import com.annabenson.viand.models.RecommendationSet;
+import com.annabenson.viand.models.TasteTag;
 import com.annabenson.viand.network.GeminiClient;
 import com.annabenson.viand.network.GeminiRequest;
 import com.annabenson.viand.network.GeminiResponse;
@@ -26,14 +33,17 @@ import com.annabenson.viand.network.RetrofitClient;
 import com.annabenson.viand.network.SpoonacularService;
 
 import com.google.android.material.textfield.TextInputEditText;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class PantryActivity extends AppCompatActivity {
+public class PantryActivity extends AppCompatActivity
+        implements ChatAdapter.PreferenceResponseListener {
 
     // Set to true to use Spoonacular test responses instead of Gemini
     private static final boolean TEST_MODE = true;
@@ -56,7 +66,9 @@ public class PantryActivity extends AppCompatActivity {
 
     private GeminiService geminiService;
     private SpoonacularService spoonacularService;
+    private DatabaseHandler databaseHandler;
     private boolean isWaiting = false;
+    private String userEmail = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,24 +87,22 @@ public class PantryActivity extends AppCompatActivity {
 
         geminiService = GeminiClient.getInstance().create(GeminiService.class);
         spoonacularService = RetrofitClient.getInstance().create(SpoonacularService.class);
+        databaseHandler = new DatabaseHandler(this);
+        userEmail = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
+                .getString(LoginActivity.KEY_EMAIL, "");
 
-        chatAdapter = new ChatAdapter(messages);
+        chatAdapter = new ChatAdapter(messages, this);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setStackFromEnd(true);
         chatRecyclerView.setLayoutManager(layoutManager);
         chatRecyclerView.setAdapter(chatAdapter);
 
         String opening = TEST_MODE
-                ? "Hi, I'm Vivian! (Test Mode) Send me anything and I'll show you some Chicken Noodle Soup recipes from Spoonacular."
+                ? "Hi, I'm Vivian! Tell me what you're in the mood for, or ask me to recommend something!"
                 : "Hi, I'm Vivian! Tell me what ingredients you have in your pantry or fridge and I'll suggest some recipes you can make.";
         addAiMessage(opening);
 
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendMessage();
-            }
-        });
+        sendButton.setOnClickListener(v -> sendMessage());
 
         messageInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEND) {
@@ -102,6 +112,33 @@ public class PantryActivity extends AppCompatActivity {
             return false;
         });
     }
+
+    // ── PreferenceResponseListener ─────────────────────────────────────────────
+
+    @Override
+    public void onPreferenceResponse(String topic, int points) {
+        Log.d("Vivian", "Preference response: topic=" + topic + ", points=" + points);
+        String cuisineName = mapTopicToCuisine(topic);
+        if (cuisineName != null) {
+            databaseHandler.upsertTasteScore(userEmail, cuisineName, "cuisine", points);
+        } else {
+            databaseHandler.upsertTasteScore(userEmail, topic, "ingredient", points);
+        }
+    }
+
+    private String mapTopicToCuisine(String topic) {
+        switch (topic) {
+            case "Italian food":  return "Italian";
+            case "Japanese food": return "Japanese";
+            case "Mexican food":  return "Mexican";
+            case "Thai food":     return "Thai";
+            case "Indian food":   return "Indian";
+            case "Chinese food":  return "Chinese";
+            default:              return null;
+        }
+    }
+
+    // ── Message Sending ────────────────────────────────────────────────────────
 
     private void sendMessage() {
         if (isWaiting) return;
@@ -113,6 +150,16 @@ public class PantryActivity extends AppCompatActivity {
 
         messages.add(new ChatMessage(ChatMessage.Type.USER, text));
         chatAdapter.notifyItemInserted(messages.size() - 1);
+        scrollToBottom();
+
+        // Keyword detection for recommendation requests
+        String lower = text.toLowerCase();
+        if (lower.contains("what sounds good") || lower.contains("what should i make") ||
+                lower.contains("what's for") || lower.contains("recommend") ||
+                lower.contains("i'm hungry") || lower.contains("help me decide")) {
+            handleRecommendationRequest();
+            return;
+        }
 
         ChatMessage loadingMsg = new ChatMessage(ChatMessage.Type.LOADING, "");
         messages.add(loadingMsg);
@@ -129,6 +176,115 @@ public class PantryActivity extends AppCompatActivity {
             sendGeminiRequest(text, loadingIndex);
         }
     }
+
+    // ── Recommendation Flow ────────────────────────────────────────────────────
+
+    private void handleRecommendationRequest() {
+        // Show loading indicator
+        ChatMessage loadingMsg = new ChatMessage(ChatMessage.Type.LOADING, "");
+        messages.add(loadingMsg);
+        final int loadingIndex = messages.size() - 1;
+        chatAdapter.notifyItemInserted(loadingIndex);
+        scrollToBottom();
+
+        isWaiting = true;
+        sendButton.setEnabled(false);
+
+        // Pick goTo recipe from saved favorites (random)
+        List<Recipe> favorites = databaseHandler.loadFavorites();
+        final Recipe goToRecipe = favorites.isEmpty()
+                ? null : favorites.get(new Random().nextInt(favorites.size()));
+
+        // Determine cuisines from taste profile
+        List<TasteTag> profile = databaseHandler.loadCuisineProfile(userEmail);
+        String topCuisine = TasteEngine.getTopCuisine(profile);
+
+        final String similarCuisine;
+        final String adventurousCuisine;
+        if (topCuisine == null) {
+            similarCuisine = "Italian";
+            adventurousCuisine = "Thai";
+        } else {
+            List<String> similar = TasteEngine.getSimilarCuisines(topCuisine);
+            List<String> adventurous = TasteEngine.getAdventurousCuisines(topCuisine);
+            similarCuisine = similar.isEmpty() ? "Italian" : similar.get(0);
+            adventurousCuisine = adventurous.isEmpty() ? "Thai" : adventurous.get(0);
+        }
+
+        // Two parallel Spoonacular calls; use counter to know when both finish
+        final Recipe[] similarRecipe = {null};
+        final Recipe[] adventurousRecipe = {null};
+        final int[] pending = {2};
+
+        Runnable onBothDone = () -> {
+            isWaiting = false;
+            sendButton.setEnabled(true);
+            messages.remove(loadingIndex);
+            chatAdapter.notifyItemRemoved(loadingIndex);
+
+            RecommendationSet set = new RecommendationSet(goToRecipe, similarRecipe[0], adventurousRecipe[0]);
+            messages.add(new ChatMessage(set));
+            chatAdapter.notifyItemInserted(messages.size() - 1);
+            scrollToBottom();
+
+            // 40% chance to inject a preference prompt
+            if (Math.random() < 0.4) {
+                String topic = TasteEngine.getNextPromptTopic(databaseHandler, userEmail);
+                if (topic != null) {
+                    databaseHandler.upsertPromptLog(userEmail, topic,
+                            System.currentTimeMillis() / 1000);
+                    messages.add(new ChatMessage(ChatMessage.Type.PREFERENCE_PROMPT,
+                            "Do you like " + topic + "?", topic));
+                    chatAdapter.notifyItemInserted(messages.size() - 1);
+                    scrollToBottom();
+                }
+            }
+        };
+
+        spoonacularService.searchRecipesWithInfo(similarCuisine, 3, similarCuisine, true,
+                BuildConfig.SPOONACULAR_KEY)
+                .enqueue(new Callback<RecipeSearchResponse>() {
+                    @Override
+                    public void onResponse(Call<RecipeSearchResponse> call,
+                                           Response<RecipeSearchResponse> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            List<Recipe> results = response.body().getResults();
+                            if (results != null && !results.isEmpty()) {
+                                similarRecipe[0] = results.get(0);
+                            }
+                        }
+                        if (--pending[0] == 0) onBothDone.run();
+                    }
+
+                    @Override
+                    public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
+                        if (--pending[0] == 0) onBothDone.run();
+                    }
+                });
+
+        spoonacularService.searchRecipesWithInfo(adventurousCuisine, 3, adventurousCuisine, true,
+                BuildConfig.SPOONACULAR_KEY)
+                .enqueue(new Callback<RecipeSearchResponse>() {
+                    @Override
+                    public void onResponse(Call<RecipeSearchResponse> call,
+                                           Response<RecipeSearchResponse> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            List<Recipe> results = response.body().getResults();
+                            if (results != null && !results.isEmpty()) {
+                                adventurousRecipe[0] = results.get(0);
+                            }
+                        }
+                        if (--pending[0] == 0) onBothDone.run();
+                    }
+
+                    @Override
+                    public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
+                        if (--pending[0] == 0) onBothDone.run();
+                    }
+                });
+    }
+
+    // ── Test / Gemini Mode ─────────────────────────────────────────────────────
 
     private void sendTestModeRequest(int loadingIndex) {
         spoonacularService.searchRecipes("Chicken Noodle Soup", 5, BuildConfig.SPOONACULAR_KEY)
@@ -213,6 +369,8 @@ public class PantryActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private void addAiMessage(String text) {
         messages.add(new ChatMessage(ChatMessage.Type.AI, text));

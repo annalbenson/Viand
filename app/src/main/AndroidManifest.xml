@@ -39,6 +39,9 @@
             android:name=".activities.PantryActivity"
             android:parentActivityName=".activities.RecipeSearchActivity"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".activities.TasteProfileActivity"
+            android:parentActivityName=".activities.RecipeSearchActivity" />
     </application>
 
 </manifest>
