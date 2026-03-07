@@ -34,9 +34,9 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         "CREATE TABLE " + TABLE_ACCOUNTS + " (" +
                 EMAIL + " TEXT not null unique," +
                 PASSWORD + " TEXT not null," +
-                PHONE + "TEXT not null," +
-                FIRST_NAME + "TEXT not null," +
-                LAST_NAME + "TEXT not null)"
+                PHONE + " TEXT not null," +
+                FIRST_NAME + " TEXT not null," +
+                LAST_NAME + " TEXT not null)"
             ;
 
     private SQLiteDatabase database;
@@ -77,18 +77,19 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         String select = "SELECT * FROM " + TABLE_ACCOUNTS +
                 " WHERE " + EMAIL + "=? AND " + PASSWORD + "=?";
         Cursor cursor = database.rawQuery(select, new String[]{email, password});
-        if(cursor != null && cursor.getCount() == 1 ) { // cursor exists and there's only one account
-            cursor.moveToFirst(); // imp
+        if(cursor != null && cursor.getCount() == 1 ) {
+            cursor.moveToFirst();
             String savedEmail = cursor.getString(0);
             String savedPass = cursor.getString(1);
             String savedPhone = cursor.getString(2);
             String savedFirst = cursor.getString(3);
             String savedLast = cursor.getString(4);
-            return new UserAccount(savedEmail,savedPass,savedPhone,
-                    new ArrayList<Order>(),savedFirst,savedLast);
-
+            cursor.close();
+            return new UserAccount(savedEmail, savedPass, savedPhone,
+                    new ArrayList<Order>(), savedFirst, savedLast);
         }
-        else return null;
+        if (cursor != null) cursor.close();
+        return null;
     }
 
 }
