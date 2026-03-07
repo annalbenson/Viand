@@ -5,12 +5,16 @@ An Android recipe discovery and cooking assistant app. Search for recipes, save 
 ## Features
 
 - **Recipe search** — powered by the Spoonacular API; horizontal card browse with images, ingredients, and step-by-step instructions
-- **Favorites** — save recipes to a local SQLite list and revisit them anytime
+- **Favorites** — save recipes to a local SQLite list, organized by meal type (Breakfast, Lunch, Dinner, Dessert, Snack); rate each with 👍 😐 👎 after you try it; tap the category label on any card to reassign it
 - **Create My Version** — customize any search result into your own recipe with editable title, ingredients, and instructions
-- **Vivian AI** — chat with an AI cooking assistant (Google Gemini 2.0 Flash) that suggests recipes based on what you have in your pantry or fridge; full multi-turn conversation; clickable recipe suggestions open the full detail screen
+- **Vivian AI** — chat with an AI cooking assistant (Google Gemini 2.0 Flash) that suggests recipes based on what you have; ask "what sounds good?" or "help me decide" and Vivian returns three personalized picks:
+  - *Your Recent Go-To* — a random saved favorite
+  - *Try Something Similar!* — a Spoonacular result from a cuisine similar to your taste profile
+  - *Feeling Bold?* — a result from a more adventurous cuisine two hops away
+- **Taste profile** — Vivian learns your preferences over time from saves and ratings; she occasionally asks quick questions ("Do you like fish? Often / Sometimes / Rarely / Never") to refine her recommendations; edit everything manually via the Taste Profile screen
 - **User accounts** — local login with email and password; dietary preferences (Gluten Free, Vegetarian, Vegan, Kosher, Halal, Dairy Free, Nut Free) saved at signup
 - **Remember me** — optional credential persistence so you skip the login screen on return visits
-- **Personalized greeting** — "Hello, [name]" banner with sign-out on the main screen
+- **Personalized greeting** — "Hello, [name]" banner with sign-out and Taste Profile access on the main screen
 
 ## Tech Stack
 
@@ -28,8 +32,9 @@ An Android recipe discovery and cooking assistant app. Search for recipes, save 
 app/src/main/java/com/annabenson/viand/
 ├── activities/   All Activity classes
 ├── adapters/     RecyclerView adapters and ViewHolders
+├── engine/       TasteEngine — cuisine similarity graph and recommendation logic
 ├── models/       POJO data models
-├── data/         DatabaseHandler (SQLite)
+├── data/         DatabaseHandler (SQLite, schema v7)
 └── network/      Retrofit clients, service interfaces, API models
 ```
 
@@ -48,7 +53,7 @@ app/src/main/java/com/annabenson/viand/
 
 > `local.properties` is gitignored and must be created manually on each machine.
 
-> To develop without Gemini quota, set `TEST_MODE = true` in `PantryActivity.java` — Vivian will return Spoonacular search results instead of AI responses.
+> To develop without Gemini quota, set `TEST_MODE = true` in `PantryActivity.java` — Vivian will use Spoonacular search results instead of AI responses. Recommendation requests ("what sounds good?") work in both modes.
 
 ## Design Resources
 

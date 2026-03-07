@@ -28,6 +28,14 @@
             android:textStyle="bold" />
 
         <Button
+            android:id="@+id/tasteProfileButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Taste Profile"
+            android:textColor="#FFFFFF"
+            style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+        <Button
             android:id="@+id/signOutButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -118,11 +126,12 @@
                 android:textStyle="bold"
                 android:textSize="16sp" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/favoritesRecyclerView"
+            <!-- Populated dynamically with one labelled row per meal type -->
+            <LinearLayout
+                android:id="@+id/favoritesContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
+                android:orientation="vertical" />
 
             <TextView
                 android:layout_width="match_parent"
