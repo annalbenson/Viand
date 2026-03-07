@@ -41,6 +41,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
     private TextView instructionsText;
     private Button saveToFavoritesButton;
     private Button createMyVersionButton;
+    private Button logMealButton;
 
     private SpoonacularService spoonacularService;
     private DatabaseHandler databaseHandler;
@@ -62,6 +63,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
         instructionsText = findViewById(com.annabenson.viand.R.id.instructionsText);
         saveToFavoritesButton = findViewById(com.annabenson.viand.R.id.saveToFavoritesButton);
         createMyVersionButton = findViewById(com.annabenson.viand.R.id.createMyVersionButton);
+        logMealButton = findViewById(com.annabenson.viand.R.id.logMealButton);
 
         ImageButton backButton = findViewById(com.annabenson.viand.R.id.backButton);
         backButton.setOnClickListener(v -> finish());
@@ -113,6 +115,20 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 intent.putExtra("CUSTOM_INGREDIENTS", buildIngredientsText(currentDetail));
                 intent.putExtra("CUSTOM_INSTRUCTIONS", buildInstructionsText(currentDetail));
                 startActivity(intent);
+            }
+        });
+
+        logMealButton.setOnClickListener(v -> {
+            if (currentDetail != null) {
+                String mealType = detectMealType(currentDetail.getDishTypes());
+                databaseHandler.logMeal(userEmail,
+                        currentDetail.getId(),
+                        currentDetail.getTitle(),
+                        currentDetail.getImage(),
+                        mealType);
+                Toast.makeText(this, "Logged! Nice cooking.", Toast.LENGTH_SHORT).show();
+                logMealButton.setText("Logged!");
+                logMealButton.setEnabled(false);
             }
         });
     }
@@ -185,9 +201,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
         if (ingredients != null) {
             for (Ingredient ingredient : ingredients) {
                 TextView tv = new TextView(this);
-                String amount = ingredient.getAmount() % 1 == 0
-                        ? String.valueOf((int) ingredient.getAmount())
-                        : String.valueOf(ingredient.getAmount());
+                String amount = formatAmount(ingredient.getAmount());
                 tv.setText("• " + amount + " " + ingredient.getUnit() + " " + ingredient.getName());
                 tv.setTextSize(14);
                 tv.setPadding(0, 4, 0, 4);
@@ -203,9 +217,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
         StringBuilder sb = new StringBuilder();
         if (detail.getExtendedIngredients() != null) {
             for (Ingredient ingredient : detail.getExtendedIngredients()) {
-                String amount = ingredient.getAmount() % 1 == 0
-                        ? String.valueOf((int) ingredient.getAmount())
-                        : String.valueOf(ingredient.getAmount());
+                String amount = formatAmount(ingredient.getAmount());
                 sb.append(amount).append(" ").append(ingredient.getUnit())
                   .append(" ").append(ingredient.getName()).append("\n");
             }
@@ -254,6 +266,10 @@ public class RecipeDetailActivity extends AppCompatActivity {
             chip.setChipBackgroundColorResource(android.R.color.transparent);
             tagsChipGroup.addView(chip);
         }
+    }
+
+    private static String formatAmount(double amount) {
+        return amount % 1 == 0 ? String.valueOf((int) amount) : String.valueOf(amount);
     }
 
     private static String formatTag(String raw) {

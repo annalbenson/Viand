@@ -21,6 +21,7 @@ import com.annabenson.viand.adapters.ChatAdapter;
 import com.annabenson.viand.data.DatabaseHandler;
 import com.annabenson.viand.engine.TasteEngine;
 import com.annabenson.viand.models.ChatMessage;
+import com.annabenson.viand.models.MealLogEntry;
 import com.annabenson.viand.models.Recipe;
 import com.annabenson.viand.models.RecommendationSet;
 import com.annabenson.viand.models.TasteTag;
@@ -46,7 +47,7 @@ public class PantryActivity extends AppCompatActivity
         implements ChatAdapter.PreferenceResponseListener {
 
     // Set to true to use Spoonacular test responses instead of Gemini
-    private static final boolean TEST_MODE = true;
+    private static final boolean TEST_MODE = BuildConfig.DEBUG;
 
     private static final String SYSTEM_PROMPT =
             "You are Vivian, a friendly cooking assistant. " +
@@ -152,8 +153,18 @@ public class PantryActivity extends AppCompatActivity
         chatAdapter.notifyItemInserted(messages.size() - 1);
         scrollToBottom();
 
-        // Keyword detection for recommendation requests
+        // Keyword detection for meal history queries
         String lower = text.toLowerCase();
+        if (lower.contains("what did i eat") || lower.contains("what did i make") ||
+                lower.contains("what did i cook") || lower.contains("what have i been making") ||
+                lower.contains("what i ate") || lower.contains("what i've made") ||
+                lower.contains("meal history") || lower.contains("my meals") ||
+                lower.contains("what i've been eating") || lower.contains("what i cooked")) {
+            handleMealHistoryQuery(lower);
+            return;
+        }
+
+        // Keyword detection for recommendation requests
         if (lower.contains("what sounds good") || lower.contains("what should i make") ||
                 lower.contains("what's for") || lower.contains("recommend") ||
                 lower.contains("i'm hungry") || lower.contains("help me decide")) {
@@ -167,8 +178,7 @@ public class PantryActivity extends AppCompatActivity
         chatAdapter.notifyItemInserted(loadingIndex);
         scrollToBottom();
 
-        isWaiting = true;
-        sendButton.setEnabled(false);
+        setWaiting(true);
 
         if (TEST_MODE) {
             sendTestModeRequest(text, loadingIndex);
@@ -187,8 +197,7 @@ public class PantryActivity extends AppCompatActivity
         chatAdapter.notifyItemInserted(loadingIndex);
         scrollToBottom();
 
-        isWaiting = true;
-        sendButton.setEnabled(false);
+        setWaiting(true);
 
         // Pick goTo recipe from saved favorites (random)
         List<Recipe> favorites = databaseHandler.loadFavorites();
@@ -217,8 +226,7 @@ public class PantryActivity extends AppCompatActivity
         final int[] pending = {2};
 
         Runnable onBothDone = () -> {
-            isWaiting = false;
-            sendButton.setEnabled(true);
+            setWaiting(false);
             messages.remove(loadingIndex);
             chatAdapter.notifyItemRemoved(loadingIndex);
 
@@ -319,8 +327,7 @@ public class PantryActivity extends AppCompatActivity
                     @Override
                     public void onResponse(Call<RecipeSearchResponse> call,
                                            Response<RecipeSearchResponse> response) {
-                        isWaiting = false;
-                        sendButton.setEnabled(true);
+                        setWaiting(false);
                         messages.remove(loadingIndex);
                         chatAdapter.notifyItemRemoved(loadingIndex);
 
@@ -340,8 +347,7 @@ public class PantryActivity extends AppCompatActivity
 
                     @Override
                     public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
-                        isWaiting = false;
-                        sendButton.setEnabled(true);
+                        setWaiting(false);
                         messages.remove(loadingIndex);
                         chatAdapter.notifyItemRemoved(loadingIndex);
                         addAiMessage("Test mode: Network error: " + t.getMessage());
@@ -361,8 +367,7 @@ public class PantryActivity extends AppCompatActivity
                     @Override
                     public void onResponse(Call<GeminiResponse> call,
                                            Response<GeminiResponse> response) {
-                        isWaiting = false;
-                        sendButton.setEnabled(true);
+                        setWaiting(false);
                         messages.remove(loadingIndex);
                         chatAdapter.notifyItemRemoved(loadingIndex);
 
@@ -388,8 +393,7 @@ public class PantryActivity extends AppCompatActivity
 
                     @Override
                     public void onFailure(Call<GeminiResponse> call, Throwable t) {
-                        isWaiting = false;
-                        sendButton.setEnabled(true);
+                        setWaiting(false);
                         messages.remove(loadingIndex);
                         chatAdapter.notifyItemRemoved(loadingIndex);
                         addAiMessage("Network error: " + t.getMessage());
@@ -398,6 +402,11 @@ public class PantryActivity extends AppCompatActivity
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    private void setWaiting(boolean waiting) {
+        isWaiting = waiting;
+        sendButton.setEnabled(!waiting);
+    }
 
     private void addAiMessage(String text) {
         messages.add(new ChatMessage(ChatMessage.Type.AI, text));
@@ -408,6 +417,60 @@ public class PantryActivity extends AppCompatActivity
     private void scrollToBottom() {
         chatRecyclerView.post(() ->
                 chatRecyclerView.smoothScrollToPosition(messages.size() - 1));
+    }
+
+    // ── Meal History ───────────────────────────────────────────────────────────
+
+    private void handleMealHistoryQuery(String lower) {
+        int daysBack = lower.contains("last month") ? 30 : 7;
+        boolean likedOnly = lower.contains("liked") || lower.contains("loved") || lower.contains("enjoyed");
+
+        List<MealLogEntry> meals = databaseHandler.loadRecentMeals(userEmail, daysBack);
+
+        if (likedOnly) {
+            List<MealLogEntry> filtered = new ArrayList<>();
+            for (MealLogEntry entry : meals) {
+                if (entry.rating != null && !entry.rating.equalsIgnoreCase("disliked")) {
+                    filtered.add(entry);
+                }
+            }
+            meals = filtered;
+        }
+
+        addAiMessage(formatMealHistoryResponse(meals));
+    }
+
+    private String formatMealHistoryResponse(List<MealLogEntry> meals) {
+        if (meals.isEmpty()) {
+            return "I don't see any meals logged yet! Next time you cook a recipe, " +
+                    "tap \"I Made This!\" on the recipe page and I'll remember it for you.";
+        }
+
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("EEE, MMM d", java.util.Locale.getDefault());
+        StringBuilder sb = new StringBuilder("Here's what you've been cooking:\n\n");
+
+        for (MealLogEntry entry : meals) {
+            sb.append("• ").append(entry.recipeTitle);
+            if (entry.mealType != null && !entry.mealType.equals("Other")) {
+                sb.append(" (").append(entry.mealType).append(")");
+            }
+            if (entry.rating != null) {
+                if (entry.rating.equalsIgnoreCase("disliked")) {
+                    sb.append(" ✗");
+                } else {
+                    sb.append(" ★");
+                }
+            }
+            String dateStr = sdf.format(new java.util.Date(entry.madeAt * 1000));
+            sb.append(" — ").append(dateStr).append("\n");
+        }
+
+        if (meals.size() >= 3) {
+            sb.append("\nLooks like you've been busy in the kitchen! Keep it up!");
+        }
+
+        return sb.toString().trim();
     }
 
     @Override

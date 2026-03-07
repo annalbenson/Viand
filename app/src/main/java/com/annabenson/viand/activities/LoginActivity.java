@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -24,8 +23,6 @@ public class LoginActivity extends AppCompatActivity {
     static final String KEY_EMAIL      = "saved_email";
     static final String KEY_PASSWORD   = "saved_password";
     static final String KEY_USER_NAME  = "user_name";
-
-    private LoginActivity loginActivity = this;
 
     private TextInputEditText email;
     private TextInputEditText password;
@@ -65,36 +62,30 @@ public class LoginActivity extends AppCompatActivity {
 
         databaseHandler = new DatabaseHandler(this);
 
-        createButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d(TAG, "onClick: create account button pressed");
-                Intent intent = new Intent(loginActivity, AccountCreationActivity.class);
-                intent.putExtra("AccountType", "User");
-                startActivity(intent);
-            }
+        createButton.setOnClickListener(v -> {
+            Log.d(TAG, "onClick: create account button pressed");
+            Intent intent = new Intent(LoginActivity.this, AccountCreationActivity.class);
+            intent.putExtra("AccountType", "User");
+            startActivity(intent);
         });
 
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d(TAG, "onClick: login button pressed");
-                String inputEmail    = email.getText().toString().trim();
-                String inputPassword = password.getText().toString();
-                UserAccount account  = databaseHandler.loadUserAccount(inputEmail, inputPassword);
-                if (account != null) {
-                    if (rememberMe.isChecked()) {
-                        prefs.edit()
-                                .putBoolean(KEY_REMEMBER, true)
-                                .putString(KEY_EMAIL, inputEmail)
-                                .putString(KEY_PASSWORD, inputPassword)
-                                .putString(KEY_USER_NAME, account.getName())
-                                .apply();
-                    }
-                    launchSearchScreen(account.getName());
-                } else {
-                    Toast.makeText(view.getContext(), "Invalid login", Toast.LENGTH_SHORT).show();
+        loginButton.setOnClickListener(v -> {
+            Log.d(TAG, "onClick: login button pressed");
+            String inputEmail    = email.getText().toString().trim();
+            String inputPassword = password.getText().toString();
+            UserAccount account  = databaseHandler.loadUserAccount(inputEmail, inputPassword);
+            if (account != null) {
+                if (rememberMe.isChecked()) {
+                    prefs.edit()
+                            .putBoolean(KEY_REMEMBER, true)
+                            .putString(KEY_EMAIL, inputEmail)
+                            .putString(KEY_PASSWORD, inputPassword)
+                            .putString(KEY_USER_NAME, account.getName())
+                            .apply();
                 }
+                launchSearchScreen(account.getName());
+            } else {
+                Toast.makeText(LoginActivity.this, "Invalid login", Toast.LENGTH_SHORT).show();
             }
         });
     }

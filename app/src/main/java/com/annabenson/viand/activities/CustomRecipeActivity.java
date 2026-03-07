@@ -56,41 +56,35 @@ public class CustomRecipeActivity extends AppCompatActivity {
             deleteButton.setVisibility(View.VISIBLE);
         }
 
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String title = titleField.getText().toString().trim();
-                String ingredients = ingredientsField.getText().toString().trim();
-                String instructions = instructionsField.getText().toString().trim();
+        saveButton.setOnClickListener(v -> {
+            String title = titleField.getText().toString().trim();
+            String ingredients = ingredientsField.getText().toString().trim();
+            String instructions = instructionsField.getText().toString().trim();
 
-                if (title.isEmpty()) {
-                    Toast.makeText(CustomRecipeActivity.this,
-                            "Please enter a recipe title", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (existingId == -1) {
-                    databaseHandler.addCustomRecipe(new CustomRecipe(title, ingredients, instructions));
-                    Toast.makeText(CustomRecipeActivity.this,
-                            "Recipe saved!", Toast.LENGTH_SHORT).show();
-                } else {
-                    databaseHandler.updateCustomRecipe(
-                            new CustomRecipe(existingId, title, ingredients, instructions));
-                    Toast.makeText(CustomRecipeActivity.this,
-                            "Recipe updated!", Toast.LENGTH_SHORT).show();
-                }
-                finish();
+            if (title.isEmpty()) {
+                Toast.makeText(CustomRecipeActivity.this,
+                        "Please enter a recipe title", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            if (existingId == -1) {
+                databaseHandler.addCustomRecipe(new CustomRecipe(title, ingredients, instructions));
+                Toast.makeText(CustomRecipeActivity.this,
+                        "Recipe saved!", Toast.LENGTH_SHORT).show();
+            } else {
+                databaseHandler.updateCustomRecipe(
+                        new CustomRecipe(existingId, title, ingredients, instructions));
+                Toast.makeText(CustomRecipeActivity.this,
+                        "Recipe updated!", Toast.LENGTH_SHORT).show();
+            }
+            finish();
         });
 
-        deleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                databaseHandler.deleteCustomRecipe(existingId);
-                Toast.makeText(CustomRecipeActivity.this,
-                        "Recipe deleted", Toast.LENGTH_SHORT).show();
-                finish();
-            }
+        deleteButton.setOnClickListener(v -> {
+            databaseHandler.deleteCustomRecipe(existingId);
+            Toast.makeText(CustomRecipeActivity.this,
+                    "Recipe deleted", Toast.LENGTH_SHORT).show();
+            finish();
         });
     }
 

@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.annabenson.viand.models.CustomRecipe;
+import com.annabenson.viand.models.MealLogEntry;
 import com.annabenson.viand.models.Recipe;
 import com.annabenson.viand.models.TasteTag;
 import com.annabenson.viand.models.UserAccount;
@@ -20,7 +21,7 @@ import java.util.List;
 public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
 
     private static final String TAG = "DatabaseHandler";
-    private static final int DATABASE_VERSION = 7; // change schema --> increment version
+    private static final int DATABASE_VERSION = 8; // change schema --> increment version
     private static final String DATABASE_NAME   = "ViandDatabase";
 
     /* accounts table */
@@ -56,6 +57,17 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
     private static final String TASTE_TAG = "Tag";
     private static final String TASTE_TAG_TYPE = "TagType";
     private static final String TASTE_SCORE = "Score";
+
+    /* meal log table */
+
+    private static final String TABLE_MEAL_LOG = "MealLogTable";
+    private static final String MEAL_LOG_ID = "Id";
+    private static final String MEAL_LOG_EMAIL = "UserEmail";
+    private static final String MEAL_LOG_RECIPE_ID = "RecipeId";
+    private static final String MEAL_LOG_TITLE = "RecipeTitle";
+    private static final String MEAL_LOG_IMAGE = "RecipeImage";
+    private static final String MEAL_LOG_MEAL_TYPE = "MealType";
+    private static final String MEAL_LOG_MADE_AT = "MadeAt";
 
     /* preference prompt log table */
 
@@ -97,6 +109,17 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
                 "PRIMARY KEY (" + TASTE_EMAIL + ", " + TASTE_TAG + ", " + TASTE_TAG_TYPE + "))"
             ;
 
+    private static final String SQL_CREATE_MEAL_LOG_TABLE =
+        "CREATE TABLE IF NOT EXISTS " + TABLE_MEAL_LOG + " (" +
+                MEAL_LOG_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                MEAL_LOG_EMAIL + " TEXT NOT NULL," +
+                MEAL_LOG_RECIPE_ID + " INTEGER NOT NULL," +
+                MEAL_LOG_TITLE + " TEXT NOT NULL," +
+                MEAL_LOG_IMAGE + " TEXT," +
+                MEAL_LOG_MEAL_TYPE + " TEXT," +
+                MEAL_LOG_MADE_AT + " INTEGER NOT NULL)"
+            ;
+
     private static final String SQL_CREATE_PREFERENCE_PROMPT_LOG_TABLE =
         "CREATE TABLE IF NOT EXISTS " + TABLE_PROMPT_LOG + " (" +
                 "Id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -123,6 +146,7 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         db.execSQL(SQL_CREATE_CUSTOM_TABLE);
         db.execSQL(SQL_CREATE_TASTE_PROFILE_TABLE);
         db.execSQL(SQL_CREATE_PREFERENCE_PROMPT_LOG_TABLE);
+        db.execSQL(SQL_CREATE_MEAL_LOG_TABLE);
     }
 
     @Override
@@ -146,6 +170,9 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         }
         if (oldVersion < 7) {
             db.execSQL("ALTER TABLE " + TABLE_FAVORITES + " ADD COLUMN " + RECIPE_MEAL_TYPE + " TEXT");
+        }
+        if (oldVersion < 8) {
+            db.execSQL(SQL_CREATE_MEAL_LOG_TABLE);
         }
     }
 
@@ -355,5 +382,47 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         values.put(PROMPT_TOPIC, topic);
         values.put(PROMPT_LAST_ASKED, timestampSeconds);
         database.insertWithOnConflict(TABLE_PROMPT_LOG, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    // ── Meal Log Methods ───────────────────────────────────────────────────────
+
+    public void logMeal(String email, int recipeId, String title, String image, String mealType) {
+        ContentValues values = new ContentValues();
+        values.put(MEAL_LOG_EMAIL, email);
+        values.put(MEAL_LOG_RECIPE_ID, recipeId);
+        values.put(MEAL_LOG_TITLE, title);
+        values.put(MEAL_LOG_IMAGE, image);
+        values.put(MEAL_LOG_MEAL_TYPE, mealType);
+        values.put(MEAL_LOG_MADE_AT, System.currentTimeMillis() / 1000);
+        database.insert(TABLE_MEAL_LOG, null, values);
+    }
+
+    public List<MealLogEntry> loadRecentMeals(String email, int daysBack) {
+        List<MealLogEntry> entries = new ArrayList<>();
+        long cutoff = System.currentTimeMillis() / 1000 - (long) daysBack * 86400;
+        String select =
+            "SELECT m." + MEAL_LOG_ID + ", m." + MEAL_LOG_RECIPE_ID + ", m." + MEAL_LOG_TITLE +
+            ", m." + MEAL_LOG_IMAGE + ", m." + MEAL_LOG_MEAL_TYPE + ", m." + MEAL_LOG_MADE_AT +
+            ", f." + RECIPE_RATING +
+            " FROM " + TABLE_MEAL_LOG + " m" +
+            " LEFT JOIN " + TABLE_FAVORITES + " f ON m." + MEAL_LOG_RECIPE_ID + " = f." + RECIPE_ID +
+            " WHERE m." + MEAL_LOG_EMAIL + "=? AND m." + MEAL_LOG_MADE_AT + " >= ?" +
+            " ORDER BY m." + MEAL_LOG_MADE_AT + " DESC";
+        Cursor cursor = database.rawQuery(select, new String[]{email, String.valueOf(cutoff)});
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                MealLogEntry entry = new MealLogEntry();
+                entry.id = cursor.getInt(0);
+                entry.recipeId = cursor.getInt(1);
+                entry.recipeTitle = cursor.getString(2);
+                entry.recipeImage = cursor.getString(3);
+                entry.mealType = cursor.getString(4);
+                entry.madeAt = cursor.getLong(5);
+                entry.rating = cursor.getString(6);
+                entries.add(entry);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return entries;
     }
 }
