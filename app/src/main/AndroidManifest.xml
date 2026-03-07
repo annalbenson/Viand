@@ -10,7 +10,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".activities.MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -18,26 +18,26 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LoginActivity"
-            android:parentActivityName=".MainActivity" />
+            android:name=".activities.LoginActivity"
+            android:parentActivityName=".activities.MainActivity" />
         <activity
-            android:name=".AccountCreationActivity"
-            android:parentActivityName=".LoginActivity" />
+            android:name=".activities.AccountCreationActivity"
+            android:parentActivityName=".activities.LoginActivity" />
         <activity
-            android:name=".UserMainActivity"
-            android:parentActivityName=".LoginActivity"/>
+            android:name=".activities.UserMainActivity"
+            android:parentActivityName=".activities.LoginActivity"/>
         <activity
-            android:name=".RecipeSearchActivity"
-            android:parentActivityName=".LoginActivity" />
+            android:name=".activities.RecipeSearchActivity"
+            android:parentActivityName=".activities.LoginActivity" />
         <activity
-            android:name=".RecipeDetailActivity"
-            android:parentActivityName=".RecipeSearchActivity" />
+            android:name=".activities.RecipeDetailActivity"
+            android:parentActivityName=".activities.RecipeSearchActivity" />
         <activity
-            android:name=".CustomRecipeActivity"
-            android:parentActivityName=".RecipeSearchActivity" />
+            android:name=".activities.CustomRecipeActivity"
+            android:parentActivityName=".activities.RecipeSearchActivity" />
         <activity
-            android:name=".PantryActivity"
-            android:parentActivityName=".RecipeSearchActivity"
+            android:name=".activities.PantryActivity"
+            android:parentActivityName=".activities.RecipeSearchActivity"
             android:windowSoftInputMode="adjustResize" />
     </application>
 
