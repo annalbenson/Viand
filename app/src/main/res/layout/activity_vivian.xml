@@ -8,7 +8,7 @@
     android:background="?attr/colorSurface">
 
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/pantryToolbar"
+        android:id="@+id/vivianToolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"

@@ -23,6 +23,7 @@ public class LoginActivity extends AppCompatActivity {
     static final String KEY_EMAIL      = "saved_email";
     static final String KEY_PASSWORD   = "saved_password";
     static final String KEY_USER_NAME  = "user_name";
+    static final String KEY_USER_ID    = "user_id";
 
     private TextInputEditText email;
     private TextInputEditText password;
@@ -45,7 +46,8 @@ public class LoginActivity extends AppCompatActivity {
             UserAccount account  = db.loadUserAccount(savedEmail, savedPassword);
             if (account != null) {
                 Log.d(TAG, "Auto-login successful for " + savedEmail);
-                launchSearchScreen(account.getName());
+                prefs.edit().putInt(KEY_USER_ID, account.getId()).apply();
+                launchHomeScreen(account.getName());
                 return;
             }
             // Saved credentials no longer valid — clear them
@@ -75,23 +77,22 @@ public class LoginActivity extends AppCompatActivity {
             String inputPassword = password.getText().toString();
             UserAccount account  = databaseHandler.loadUserAccount(inputEmail, inputPassword);
             if (account != null) {
-                if (rememberMe.isChecked()) {
-                    prefs.edit()
-                            .putBoolean(KEY_REMEMBER, true)
-                            .putString(KEY_EMAIL, inputEmail)
-                            .putString(KEY_PASSWORD, inputPassword)
-                            .putString(KEY_USER_NAME, account.getName())
-                            .apply();
-                }
-                launchSearchScreen(account.getName());
+                prefs.edit()
+                        .putInt(KEY_USER_ID, account.getId())
+                        .putString(KEY_EMAIL, inputEmail)
+                        .putString(KEY_USER_NAME, account.getName())
+                        .putBoolean(KEY_REMEMBER, rememberMe.isChecked())
+                        .putString(KEY_PASSWORD, rememberMe.isChecked() ? inputPassword : "")
+                        .apply();
+                launchHomeScreen(account.getName());
             } else {
                 Toast.makeText(LoginActivity.this, "Invalid login", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void launchSearchScreen(String name) {
-        Intent intent = new Intent(this, RecipeSearchActivity.class);
+    private void launchHomeScreen(String name) {
+        Intent intent = new Intent(this, HomeActivity.class);
         intent.putExtra("USER_NAME", name);
         startActivity(intent);
         finish();

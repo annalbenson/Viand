@@ -13,7 +13,8 @@ An Android recipe discovery and cooking assistant app. Search for recipes, save 
   - *Feeling Bold?* — a result from a more adventurous cuisine two hops away
 - **Meal log** — tap "I Made This!" on any recipe to log it; ask Vivian "what did I cook last week?" or "what have I been eating that I liked?" for a formatted history with meal types, ratings, and dates — no Gemini call needed
 - **Taste profile** — Vivian learns your preferences over time from saves and ratings; she occasionally asks quick questions ("Do you like fish? Often / Sometimes / Rarely / Never") to refine her recommendations; edit everything manually via the Taste Profile screen
-- **User accounts** — local login with email and password; dietary preferences (Gluten Free, Vegetarian, Vegan, Kosher, Halal, Dairy Free, Nut Free) saved at signup
+- **Weekly meal planner** — add any recipe to your meal plan while viewing it; pick a day (Monday–Sunday) or drop it in an unscheduled Bucket; view your whole week at a glance, delete entries, and tap "Build Grocery List" to auto-generate a consolidated, alphabetically sorted shopping list grouped by ingredient name with quantities and source recipes
+- **User accounts** — local login with email and password; dietary preferences (Gluten Free, Vegetarian, Vegan, Kosher, Halal, Dairy Free, Nut Free) saved at signup; all data (favorites, recipes, taste profile, meal log, meal plan) is fully isolated per account
 - **Remember me** — optional credential persistence so you skip the login screen on return visits
 - **Personalized greeting** — "Hello, [name]" banner with sign-out and Taste Profile access on the main screen
 
@@ -35,7 +36,7 @@ app/src/main/java/com/annabenson/viand/
 ├── adapters/     RecyclerView adapters and ViewHolders
 ├── engine/       TasteEngine — cuisine similarity graph and recommendation logic
 ├── models/       POJO data models
-├── data/         DatabaseHandler (SQLite, schema v8)
+├── data/         DatabaseHandler (SQLite, schema v11)
 └── network/      Retrofit clients, service interfaces, API models
 ```
 
@@ -54,7 +55,7 @@ app/src/main/java/com/annabenson/viand/
 
 > `local.properties` is gitignored and must be created manually on each machine.
 
-> `TEST_MODE` in `PantryActivity.java` is tied to `BuildConfig.DEBUG` — debug builds use Spoonacular responses instead of Gemini; release builds use real AI. Recommendation requests ("what sounds good?") work in both modes.
+> `TEST_MODE` in `VivianActivity.java` is tied to `BuildConfig.DEBUG` — debug builds use Spoonacular responses instead of Gemini; release builds use real AI. Recommendation requests ("what sounds good?") work in both modes.
 
 ## Design Resources
 

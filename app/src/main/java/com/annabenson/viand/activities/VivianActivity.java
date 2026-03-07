@@ -43,7 +43,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class PantryActivity extends AppCompatActivity
+public class VivianActivity extends AppCompatActivity
         implements ChatAdapter.PreferenceResponseListener {
 
     // Set to true to use Spoonacular test responses instead of Gemini
@@ -69,14 +69,14 @@ public class PantryActivity extends AppCompatActivity
     private SpoonacularService spoonacularService;
     private DatabaseHandler databaseHandler;
     private boolean isWaiting = false;
-    private String userEmail = "";
+    private int userId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(com.annabenson.viand.R.layout.activity_pantry);
+        setContentView(com.annabenson.viand.R.layout.activity_vivian);
 
-        Toolbar toolbar = findViewById(com.annabenson.viand.R.id.pantryToolbar);
+        Toolbar toolbar = findViewById(com.annabenson.viand.R.id.vivianToolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -89,8 +89,8 @@ public class PantryActivity extends AppCompatActivity
         geminiService = GeminiClient.getInstance().create(GeminiService.class);
         spoonacularService = RetrofitClient.getInstance().create(SpoonacularService.class);
         databaseHandler = new DatabaseHandler(this);
-        userEmail = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
-                .getString(LoginActivity.KEY_EMAIL, "");
+        userId = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
+                .getInt(LoginActivity.KEY_USER_ID, -1);
 
         chatAdapter = new ChatAdapter(messages, this);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -121,9 +121,9 @@ public class PantryActivity extends AppCompatActivity
         Log.d("Vivian", "Preference response: topic=" + topic + ", points=" + points);
         String cuisineName = mapTopicToCuisine(topic);
         if (cuisineName != null) {
-            databaseHandler.upsertTasteScore(userEmail, cuisineName, "cuisine", points);
+            databaseHandler.upsertTasteScore(userId, cuisineName, "cuisine", points);
         } else {
-            databaseHandler.upsertTasteScore(userEmail, topic, "ingredient", points);
+            databaseHandler.upsertTasteScore(userId, topic, "ingredient", points);
         }
     }
 
@@ -244,12 +244,12 @@ public class PantryActivity extends AppCompatActivity
         setWaiting(true);
 
         // Pick goTo recipe from saved favorites (random)
-        List<Recipe> favorites = databaseHandler.loadFavorites();
+        List<Recipe> favorites = databaseHandler.loadFavorites(userId);
         final Recipe goToRecipe = favorites.isEmpty()
                 ? null : favorites.get(new Random().nextInt(favorites.size()));
 
         // Determine cuisines from taste profile
-        List<TasteTag> profile = databaseHandler.loadCuisineProfile(userEmail);
+        List<TasteTag> profile = databaseHandler.loadCuisineProfile(userId);
         String topCuisine = TasteEngine.getTopCuisine(profile);
 
         final String similarCuisine;
@@ -281,9 +281,9 @@ public class PantryActivity extends AppCompatActivity
 
             // 40% chance to inject a preference prompt
             if (Math.random() < 0.4) {
-                String topic = TasteEngine.getNextPromptTopic(databaseHandler, userEmail);
+                String topic = TasteEngine.getNextPromptTopic(databaseHandler, userId);
                 if (topic != null) {
-                    databaseHandler.upsertPromptLog(userEmail, topic,
+                    databaseHandler.upsertPromptLog(userId, topic,
                             System.currentTimeMillis() / 1000);
                     messages.add(new ChatMessage(ChatMessage.Type.PREFERENCE_PROMPT,
                             "Do you like " + topic + "?", topic));
@@ -340,15 +340,35 @@ public class PantryActivity extends AppCompatActivity
 
     private static final String[][] TEST_QUERIES = {
         // Breakfast
-        { "avocado toast", "fluffy pancakes", "breakfast burrito", "overnight oats", "eggs benedict" },
+        { "avocado toast", "fluffy pancakes", "breakfast burrito", "overnight oats", "eggs benedict",
+          "french toast", "acai bowl", "breakfast sandwich", "shakshuka", "granola parfait",
+          "huevos rancheros", "smoothie bowl", "waffles", "crepes", "breakfast frittata",
+          "bagel with lox", "chia pudding", "dutch baby pancake", "breakfast hash", "omelette",
+          "biscuits and gravy", "banana bread", "muffins", "porridge", "breakfast quesadilla" },
         // Lunch
-        { "chicken caesar salad", "grilled cheese sandwich", "tomato soup", "BLT wrap", "quinoa bowl" },
+        { "chicken caesar salad", "grilled cheese sandwich", "tomato soup", "BLT wrap", "quinoa bowl",
+          "greek salad", "tuna melt", "lentil soup", "caprese panini", "falafel wrap",
+          "nicoise salad", "pho", "ramen", "chicken noodle soup", "veggie burger",
+          "banh mi", "cobb salad", "minestrone soup", "fish tacos", "grain bowl",
+          "turkey club sandwich", "gazpacho", "pad thai", "miso soup with tofu", "lobster bisque" },
         // Dinner
-        { "spaghetti bolognese", "chicken stir fry", "beef tacos", "salmon with vegetables", "chicken tikka masala" },
+        { "spaghetti bolognese", "chicken stir fry", "beef tacos", "salmon with vegetables", "chicken tikka masala",
+          "shrimp fried rice", "beef stew", "lamb chops", "mushroom risotto", "pork tenderloin",
+          "vegetable curry", "chicken parmesan", "beef burgers", "lobster thermidor", "duck confit",
+          "pasta carbonara", "chicken fajitas", "grilled halibut", "stuffed peppers", "lemon herb roast chicken",
+          "beef bulgogi", "mussels in white wine", "eggplant parmesan", "short ribs", "paella" },
         // Dessert
-        { "chocolate chip cookies", "cheesecake", "brownies", "apple pie", "tiramisu" },
+        { "chocolate chip cookies", "cheesecake", "brownies", "apple pie", "tiramisu",
+          "creme brulee", "lemon tart", "chocolate mousse", "red velvet cake", "baklava",
+          "panna cotta", "churros", "bread pudding", "macarons", "peach cobbler",
+          "mochi ice cream", "strawberry shortcake", "chocolate lava cake", "tres leches cake", "key lime pie",
+          "beignets", "cannoli", "profiteroles", "affogato", "banana foster" },
         // Snack
-        { "hummus and pita", "guacamole", "deviled eggs", "bruschetta", "caprese salad" },
+        { "hummus and pita", "guacamole", "deviled eggs", "bruschetta", "caprese salad",
+          "stuffed mushrooms", "spinach artichoke dip", "cheese board", "spring rolls", "nachos",
+          "edamame", "antipasto platter", "baked brie", "tzatziki with vegetables", "potato skins",
+          "chicken wings", "shrimp cocktail", "pigs in a blanket", "prosciutto wrapped melon", "quesadillas",
+          "buffalo cauliflower", "loaded sweet potato fries", "smoked salmon crostini", "mini sliders", "wonton cups" },
     };
 
     private String pickTestQuery(String userText) {
@@ -528,7 +548,7 @@ public class PantryActivity extends AppCompatActivity
         int daysBack = lower.contains("last month") ? 30 : 7;
         boolean likedOnly = lower.contains("liked") || lower.contains("loved") || lower.contains("enjoyed");
 
-        List<MealLogEntry> meals = databaseHandler.loadRecentMeals(userEmail, daysBack);
+        List<MealLogEntry> meals = databaseHandler.loadRecentMeals(userId, daysBack);
 
         if (likedOnly) {
             List<MealLogEntry> filtered = new ArrayList<>();

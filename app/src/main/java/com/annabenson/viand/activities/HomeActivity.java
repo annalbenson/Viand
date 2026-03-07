@@ -33,14 +33,15 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class RecipeSearchActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity {
 
     private TextView greetingText;
     private Button signOutButton;
     private Button tasteProfileButton;
     private EditText searchQueryInput;
     private Button searchButton;
-    private Button pantryButton;
+    private Button vivianButton;
+    private Button mealPlanButton;
     private RecyclerView searchResultsRecyclerView;
     private TextView searchResultsLabel;
     private LinearLayout favoritesContainer;
@@ -54,18 +55,20 @@ public class RecipeSearchActivity extends AppCompatActivity {
 
     private SpoonacularService spoonacularService;
     private DatabaseHandler databaseHandler;
+    private int currentUserId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(com.annabenson.viand.R.layout.activity_recipe_search);
+        setContentView(com.annabenson.viand.R.layout.activity_home);
 
         greetingText         = findViewById(com.annabenson.viand.R.id.greetingText);
         signOutButton        = findViewById(com.annabenson.viand.R.id.signOutButton);
         tasteProfileButton   = findViewById(com.annabenson.viand.R.id.tasteProfileButton);
         searchQueryInput     = findViewById(com.annabenson.viand.R.id.searchQueryInput);
         searchButton         = findViewById(com.annabenson.viand.R.id.searchButton);
-        pantryButton         = findViewById(com.annabenson.viand.R.id.pantryButton);
+        vivianButton         = findViewById(com.annabenson.viand.R.id.vivianButton);
+        mealPlanButton       = findViewById(com.annabenson.viand.R.id.mealPlanButton);
         searchResultsRecyclerView = findViewById(com.annabenson.viand.R.id.searchResultsRecyclerView);
         searchResultsLabel   = findViewById(com.annabenson.viand.R.id.searchResultsLabel);
         favoritesContainer   = findViewById(com.annabenson.viand.R.id.favoritesContainer);
@@ -80,6 +83,8 @@ public class RecipeSearchActivity extends AppCompatActivity {
 
         databaseHandler = new DatabaseHandler(this);
         spoonacularService = RetrofitClient.getInstance().create(SpoonacularService.class);
+        currentUserId = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
+                .getInt(LoginActivity.KEY_USER_ID, -1);
 
         signOutButton.setOnClickListener(v -> {
             getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE).edit().clear().apply();
@@ -91,8 +96,11 @@ public class RecipeSearchActivity extends AppCompatActivity {
         tasteProfileButton.setOnClickListener(v ->
                 startActivity(new Intent(this, TasteProfileActivity.class)));
 
-        pantryButton.setOnClickListener(v ->
-                startActivity(new Intent(this, PantryActivity.class)));
+        vivianButton.setOnClickListener(v ->
+                startActivity(new Intent(this, VivianActivity.class)));
+
+        mealPlanButton.setOnClickListener(v ->
+                startActivity(new Intent(this, MealPlanActivity.class)));
 
         searchButton.setOnClickListener(v -> performSearch());
 
@@ -108,6 +116,7 @@ public class RecipeSearchActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        databaseHandler.seedTestDataIfNeeded(currentUserId);
         loadFavorites();
         loadCustomRecipes();
     }
@@ -125,7 +134,7 @@ public class RecipeSearchActivity extends AppCompatActivity {
 
     private void loadFavorites() {
         favorites.clear();
-        favorites.addAll(databaseHandler.loadFavorites());
+        favorites.addAll(databaseHandler.loadFavorites(currentUserId));
         buildFavoritesSections();
     }
 
@@ -172,12 +181,12 @@ public class RecipeSearchActivity extends AppCompatActivity {
                     this,
                     groupList,
                     (recipe, position) -> {
-                        databaseHandler.deleteFavorite(recipe.getId());
+                        databaseHandler.deleteFavorite(currentUserId, recipe.getId());
                         loadFavorites(); // rebuild all sections
                     },
-                    (recipe, rating) -> databaseHandler.updateFavoriteRating(recipe.getId(), rating),
+                    (recipe, rating) -> databaseHandler.updateFavoriteRating(currentUserId, recipe.getId(), rating),
                     (recipe, mealType) -> {
-                        databaseHandler.updateFavoriteMealType(recipe.getId(), mealType);
+                        databaseHandler.updateFavoriteMealType(currentUserId, recipe.getId(), mealType);
                         loadFavorites(); // move card to the correct section
                     }
             );
@@ -205,7 +214,7 @@ public class RecipeSearchActivity extends AppCompatActivity {
     }
 
     private void loadCustomRecipes() {
-        List<CustomRecipe> loaded = databaseHandler.loadCustomRecipes();
+        List<CustomRecipe> loaded = databaseHandler.loadCustomRecipes(currentUserId);
         customRecipes.clear();
         customRecipes.addAll(loaded);
         customRecipeAdapter.notifyDataSetChanged();
@@ -232,13 +241,13 @@ public class RecipeSearchActivity extends AppCompatActivity {
                             searchResultsLabel.setVisibility(View.VISIBLE);
                             searchResultsRecyclerView.setVisibility(View.VISIBLE);
                         } else {
-                            Toast.makeText(RecipeSearchActivity.this,
+                            Toast.makeText(HomeActivity.this,
                                     "Search failed: " + response.code(), Toast.LENGTH_SHORT).show();
                         }
                     }
                     @Override
                     public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
-                        Toast.makeText(RecipeSearchActivity.this,
+                        Toast.makeText(HomeActivity.this,
                                 "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });

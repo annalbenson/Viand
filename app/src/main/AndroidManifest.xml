@@ -21,21 +21,24 @@
             android:name=".activities.AccountCreationActivity"
             android:parentActivityName=".activities.LoginActivity" />
         <activity
-            android:name=".activities.RecipeSearchActivity"
+            android:name=".activities.HomeActivity"
             android:parentActivityName=".activities.LoginActivity" />
         <activity
             android:name=".activities.RecipeDetailActivity"
-            android:parentActivityName=".activities.RecipeSearchActivity" />
+            android:parentActivityName=".activities.HomeActivity" />
         <activity
             android:name=".activities.CustomRecipeActivity"
-            android:parentActivityName=".activities.RecipeSearchActivity" />
+            android:parentActivityName=".activities.HomeActivity" />
         <activity
-            android:name=".activities.PantryActivity"
-            android:parentActivityName=".activities.RecipeSearchActivity"
+            android:name=".activities.VivianActivity"
+            android:parentActivityName=".activities.HomeActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".activities.TasteProfileActivity"
-            android:parentActivityName=".activities.RecipeSearchActivity" />
+            android:parentActivityName=".activities.HomeActivity" />
+        <activity
+            android:name=".activities.MealPlanActivity"
+            android:parentActivityName=".activities.HomeActivity" />
     </application>
 
 </manifest>

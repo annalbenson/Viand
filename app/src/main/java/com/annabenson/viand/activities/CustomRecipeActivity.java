@@ -11,6 +11,7 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import com.annabenson.viand.data.DatabaseHandler;
 import com.annabenson.viand.models.CustomRecipe;
+import android.content.SharedPreferences;
 
 public class CustomRecipeActivity extends AppCompatActivity {
 
@@ -21,6 +22,7 @@ public class CustomRecipeActivity extends AppCompatActivity {
     private Button deleteButton;
 
     private DatabaseHandler databaseHandler;
+    private int userId;
     private int existingId = -1; // -1 means new recipe
 
     @Override
@@ -41,6 +43,8 @@ public class CustomRecipeActivity extends AppCompatActivity {
         deleteButton = findViewById(com.annabenson.viand.R.id.deleteCustomRecipeButton);
 
         databaseHandler = new DatabaseHandler(this);
+        userId = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
+                .getInt(LoginActivity.KEY_USER_ID, -1);
 
         // Pre-populate from intent (either from Spoonacular detail or editing saved recipe)
         existingId = getIntent().getIntExtra("CUSTOM_RECIPE_ID", -1);
@@ -68,7 +72,7 @@ public class CustomRecipeActivity extends AppCompatActivity {
             }
 
             if (existingId == -1) {
-                databaseHandler.addCustomRecipe(new CustomRecipe(title, ingredients, instructions));
+                databaseHandler.addCustomRecipe(userId, new CustomRecipe(title, ingredients, instructions));
                 Toast.makeText(CustomRecipeActivity.this,
                         "Recipe saved!", Toast.LENGTH_SHORT).show();
             } else {

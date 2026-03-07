@@ -1,5 +1,6 @@
 package com.annabenson.viand.activities;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -17,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.gson.Gson;
 
 import com.annabenson.viand.BuildConfig;
 import com.annabenson.viand.data.DatabaseHandler;
@@ -25,6 +27,7 @@ import com.annabenson.viand.models.RecipeDetail;
 import com.annabenson.viand.network.RetrofitClient;
 import com.annabenson.viand.network.SpoonacularService;
 
+import java.util.Calendar;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -42,6 +45,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
     private Button saveToFavoritesButton;
     private Button createMyVersionButton;
     private Button logMealButton;
+    private Button addToMealPlanButton;
 
     private SpoonacularService spoonacularService;
     private DatabaseHandler databaseHandler;
@@ -49,7 +53,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
     private int recipeId;
     private RecipeDetail currentDetail;
     private boolean fromRecommendation;
-    private String userEmail;
+    private int userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,14 +68,15 @@ public class RecipeDetailActivity extends AppCompatActivity {
         saveToFavoritesButton = findViewById(com.annabenson.viand.R.id.saveToFavoritesButton);
         createMyVersionButton = findViewById(com.annabenson.viand.R.id.createMyVersionButton);
         logMealButton = findViewById(com.annabenson.viand.R.id.logMealButton);
+        addToMealPlanButton = findViewById(com.annabenson.viand.R.id.addToMealPlanButton);
 
         ImageButton backButton = findViewById(com.annabenson.viand.R.id.backButton);
         backButton.setOnClickListener(v -> finish());
 
         databaseHandler = new DatabaseHandler(this);
         spoonacularService = RetrofitClient.getInstance().create(SpoonacularService.class);
-        userEmail = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
-                .getString(LoginActivity.KEY_EMAIL, "");
+        userId = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
+                .getInt(LoginActivity.KEY_USER_ID, -1);
 
         recipeId = getIntent().getIntExtra("RECIPE_ID", -1);
         fromRecommendation = getIntent().getBooleanExtra("FROM_RECOMMENDATION", false);
@@ -92,6 +97,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
             if (currentDetail != null) {
                 String mealType = detectMealType(currentDetail.getDishTypes());
                 databaseHandler.addFavorite(
+                        userId,
                         currentDetail.getId(),
                         currentDetail.getTitle(),
                         currentDetail.getImage(),
@@ -121,7 +127,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
         logMealButton.setOnClickListener(v -> {
             if (currentDetail != null) {
                 String mealType = detectMealType(currentDetail.getDishTypes());
-                databaseHandler.logMeal(userEmail,
+                databaseHandler.logMeal(userId,
                         currentDetail.getId(),
                         currentDetail.getTitle(),
                         currentDetail.getImage(),
@@ -130,6 +136,24 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 logMealButton.setText("Logged!");
                 logMealButton.setEnabled(false);
             }
+        });
+
+        addToMealPlanButton.setOnClickListener(v -> {
+            if (currentDetail == null) return;
+            String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday",
+                             "Friday", "Saturday", "Sunday", "Bucket"};
+            new AlertDialog.Builder(this)
+                .setTitle("Add to which day?")
+                .setItems(days, (dialog, which) -> {
+                    String day = (which == 7) ? null : days[which];
+                    String mealType = detectMealType(currentDetail.getDishTypes());
+                    String ingredientsJson = new Gson().toJson(currentDetail.getExtendedIngredients());
+                    databaseHandler.addToMealPlan(userId, currentDetail.getId(),
+                        currentDetail.getTitle(), currentDetail.getImage(),
+                        day, mealType, ingredientsJson, getCurrentWeekStart());
+                    String label = (day != null) ? day : "Bucket";
+                    Toast.makeText(this, "Added to " + label + "!", Toast.LENGTH_SHORT).show();
+                }).show();
         });
     }
 
@@ -147,7 +171,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                             if (fromRecommendation && currentDetail.getCuisines() != null) {
                                 for (String cuisine : currentDetail.getCuisines()) {
                                     Log.d(TAG, "Recommendation open: +0.5 for " + cuisine);
-                                    databaseHandler.upsertTasteScore(userEmail, cuisine, "cuisine", 0.5f);
+                                    databaseHandler.upsertTasteScore(userId, cuisine, "cuisine", 0.5f);
                                 }
                             }
                         } else {
@@ -171,7 +195,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
         if (detail.getCuisines() != null) {
             for (String cuisine : detail.getCuisines()) {
                 Log.d(TAG, "Save: +1 for cuisine " + cuisine);
-                databaseHandler.upsertTasteScore(userEmail, cuisine, "cuisine", 1f);
+                databaseHandler.upsertTasteScore(userId, cuisine, "cuisine", 1f);
             }
         }
         // +0.5 per ingredient (top 5)
@@ -181,7 +205,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
             for (int i = 0; i < limit; i++) {
                 String ingredientName = ingredients.get(i).getName();
                 Log.d(TAG, "Save: +0.5 for ingredient " + ingredientName);
-                databaseHandler.upsertTasteScore(userEmail, ingredientName, "ingredient", 0.5f);
+                databaseHandler.upsertTasteScore(userId, ingredientName, "ingredient", 0.5f);
             }
         }
     }
@@ -306,6 +330,16 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     || lower.contains("side"))                            return "Snack";
         }
         return "Other";
+    }
+
+    static long getCurrentWeekStart() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis() / 1000;
     }
 
     @SuppressWarnings("deprecation")

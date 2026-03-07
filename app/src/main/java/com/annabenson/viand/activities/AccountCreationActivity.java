@@ -61,7 +61,7 @@ public class AccountCreationActivity extends AppCompatActivity {
 
             String dietaryPrefs = String.join(",", prefs);
 
-            UserAccount newAccount = new UserAccount(emailInput, passwordInput, nameInput, dietaryPrefs);
+            UserAccount newAccount = new UserAccount(0, emailInput, passwordInput, nameInput, dietaryPrefs);
             databaseHandler.addUserAccount(newAccount);
 
             Toast.makeText(AccountCreationActivity.this,
@@ -71,7 +71,7 @@ public class AccountCreationActivity extends AppCompatActivity {
                     .edit()
                     .putString(LoginActivity.KEY_USER_NAME, nameInput)
                     .apply();
-            Intent intent = new Intent(AccountCreationActivity.this, RecipeSearchActivity.class);
+            Intent intent = new Intent(AccountCreationActivity.this, HomeActivity.class);
             intent.putExtra("USER_NAME", nameInput);
             startActivity(intent);
             finish();

@@ -24,7 +24,7 @@ public class TasteProfileActivity extends AppCompatActivity {
 
     private LinearLayout sliderContainer;
     private DatabaseHandler databaseHandler;
-    private String userEmail;
+    private int userId;
 
     private final Map<String, SeekBar> seekBars = new HashMap<>();
 
@@ -44,11 +44,11 @@ public class TasteProfileActivity extends AppCompatActivity {
         Button saveButton = findViewById(R.id.saveTasteProfileButton);
 
         databaseHandler = new DatabaseHandler(this);
-        userEmail = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
-                .getString(LoginActivity.KEY_EMAIL, "");
+        userId = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
+                .getInt(LoginActivity.KEY_USER_ID, -1);
 
         // Load existing scores into a lookup map
-        List<TasteTag> profile = databaseHandler.loadCuisineProfile(userEmail);
+        List<TasteTag> profile = databaseHandler.loadCuisineProfile(userId);
         Map<String, Float> scoreMap = new HashMap<>();
         for (TasteTag tag : profile) {
             scoreMap.put(tag.getTag(), tag.getScore());
@@ -64,7 +64,7 @@ public class TasteProfileActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> {
             for (Map.Entry<String, SeekBar> entry : seekBars.entrySet()) {
                 databaseHandler.setTasteScore(
-                        userEmail, entry.getKey(), "cuisine", entry.getValue().getProgress());
+                        userId, entry.getKey(), "cuisine", entry.getValue().getProgress());
             }
             finish();
         });

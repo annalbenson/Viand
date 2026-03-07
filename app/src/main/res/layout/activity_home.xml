@@ -70,12 +70,23 @@
             android:text="Search" />
     </LinearLayout>
 
-    <!-- Pantry AI button -->
+    <!-- Vivian AI button -->
     <Button
-        android:id="@+id/pantryButton"
+        android:id="@+id/vivianButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="What's in your fridge? Ask Vivian"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="8dp"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+    <!-- Meal plan nav button -->
+    <Button
+        android:id="@+id/mealPlanButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="My Meal Plan"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
         android:layout_marginBottom="8dp"

@@ -81,13 +81,13 @@ public class TasteEngine {
         return twoHop;
     }
 
-    public static String getNextPromptTopic(DatabaseHandler db, String email) {
+    public static String getNextPromptTopic(DatabaseHandler db, int userId) {
         List<String> candidates = new ArrayList<>(Arrays.asList(PROMPT_TOPICS));
         Collections.shuffle(candidates);
         long now = System.currentTimeMillis() / 1000;
         long threshold = 24 * 60 * 60;
         for (String topic : candidates) {
-            long lastAsked = db.getLastPromptTime(email, topic);
+            long lastAsked = db.getLastPromptTime(userId, topic);
             if (lastAsked == -1 || (now - lastAsked) > threshold) {
                 return topic;
             }
