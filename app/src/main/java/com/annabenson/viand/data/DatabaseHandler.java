@@ -321,6 +321,13 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         return "";
     }
 
+    public void updateDietaryPreferences(int userId, String prefs) {
+        ContentValues values = new ContentValues();
+        values.put(DIETARY_PREFS, prefs);
+        database.update(TABLE_ACCOUNTS, values, ACCT_ID + "=?",
+                new String[]{String.valueOf(userId)});
+    }
+
     public UserAccount loadUserAccount(String email, String password) {
         String select = "SELECT " + ACCT_ID + "," + EMAIL + "," + PASSWORD + "," + NAME + "," +
                 DIETARY_PREFS + " FROM " + TABLE_ACCOUNTS +

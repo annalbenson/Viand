@@ -37,6 +37,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private TextView greetingText;
     private Button signOutButton;
+    private Button accountSettingsButton;
     private Button tasteProfileButton;
     private EditText searchQueryInput;
     private Button searchButton;
@@ -62,9 +63,10 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(com.annabenson.viand.R.layout.activity_home);
 
-        greetingText         = findViewById(com.annabenson.viand.R.id.greetingText);
-        signOutButton        = findViewById(com.annabenson.viand.R.id.signOutButton);
-        tasteProfileButton   = findViewById(com.annabenson.viand.R.id.tasteProfileButton);
+        greetingText          = findViewById(com.annabenson.viand.R.id.greetingText);
+        signOutButton         = findViewById(com.annabenson.viand.R.id.signOutButton);
+        accountSettingsButton = findViewById(com.annabenson.viand.R.id.accountSettingsButton);
+        tasteProfileButton    = findViewById(com.annabenson.viand.R.id.tasteProfileButton);
         searchQueryInput     = findViewById(com.annabenson.viand.R.id.searchQueryInput);
         searchButton         = findViewById(com.annabenson.viand.R.id.searchButton);
         vivianButton         = findViewById(com.annabenson.viand.R.id.vivianButton);
@@ -92,6 +94,9 @@ public class HomeActivity extends AppCompatActivity {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
         });
+
+        accountSettingsButton.setOnClickListener(v ->
+                startActivity(new Intent(this, AccountSettingsActivity.class)));
 
         tasteProfileButton.setOnClickListener(v ->
                 startActivity(new Intent(this, TasteProfileActivity.class)));

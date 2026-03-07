@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorSurface">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/accountSettingsToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:navigationIcon="@drawable/ic_back"
+        app:title="Account Settings"
+        app:titleTextColor="#FFFFFF" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Dietary Preferences"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:paddingBottom="8dp" />
+
+            <CheckBox
+                android:id="@+id/checkGlutenFree"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Gluten Free"
+                android:textSize="15sp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+
+            <CheckBox
+                android:id="@+id/checkVegetarian"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Vegetarian"
+                android:textSize="15sp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+
+            <CheckBox
+                android:id="@+id/checkVegan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Vegan"
+                android:textSize="15sp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+
+            <CheckBox
+                android:id="@+id/checkKosher"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Kosher"
+                android:textSize="15sp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+
+            <CheckBox
+                android:id="@+id/checkHalal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Halal"
+                android:textSize="15sp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+
+            <CheckBox
+                android:id="@+id/checkDairyFree"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Dairy Free"
+                android:textSize="15sp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+
+            <CheckBox
+                android:id="@+id/checkNutFree"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nut Free"
+                android:textSize="15sp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <Button
+        android:id="@+id/saveSettingsButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save"
+        android:layout_margin="16dp" />
+
+</LinearLayout>

@@ -28,6 +28,14 @@
             android:textStyle="bold" />
 
         <Button
+            android:id="@+id/accountSettingsButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textColor="#FFFFFF"
+            style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+        <Button
             android:id="@+id/tasteProfileButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

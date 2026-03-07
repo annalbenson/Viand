@@ -537,7 +537,9 @@ public class VivianActivity extends AppCompatActivity
 
         setWaiting(true);
 
-        spoonacularService.searchRecipes(ingredient, 5, BuildConfig.SPOONACULAR_KEY)
+        String[] filters = deriveDietaryFilters(databaseHandler.getDietaryPreferences(userId));
+        spoonacularService.searchRecipesWithDiet(ingredient, 5,
+                filters[0], filters[1], BuildConfig.SPOONACULAR_KEY)
                 .enqueue(new Callback<RecipeSearchResponse>() {
                     @Override
                     public void onResponse(Call<RecipeSearchResponse> call,

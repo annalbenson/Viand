@@ -39,6 +39,9 @@
         <activity
             android:name=".activities.MealPlanActivity"
             android:parentActivityName=".activities.HomeActivity" />
+        <activity
+            android:name=".activities.AccountSettingsActivity"
+            android:parentActivityName=".activities.HomeActivity" />
     </application>
 
 </manifest>
