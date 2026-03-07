@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
@@ -24,6 +26,19 @@
         <activity
             android:name=".UserMainActivity"
             android:parentActivityName=".LoginActivity"/>
+        <activity
+            android:name=".RecipeSearchActivity"
+            android:parentActivityName=".LoginActivity" />
+        <activity
+            android:name=".RecipeDetailActivity"
+            android:parentActivityName=".RecipeSearchActivity" />
+        <activity
+            android:name=".CustomRecipeActivity"
+            android:parentActivityName=".RecipeSearchActivity" />
+        <activity
+            android:name=".PantryActivity"
+            android:parentActivityName=".RecipeSearchActivity"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>
