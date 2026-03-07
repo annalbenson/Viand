@@ -164,6 +164,18 @@ public class PantryActivity extends AppCompatActivity
             return;
         }
 
+        // Keyword detection for ingredient-based suggestions
+        if ((lower.contains("suggest") || lower.contains("what can i") ||
+                lower.contains("recipe") || lower.contains("something") ||
+                lower.contains("cook") || lower.contains("make")) &&
+                (lower.contains(" with ") || lower.contains("using "))) {
+            String ingredient = extractIngredient(lower);
+            if (ingredient != null) {
+                handleIngredientSuggestion(ingredient);
+                return;
+            }
+        }
+
         // Keyword detection for recommendation requests
         if (lower.contains("what sounds good") || lower.contains("what should i make") ||
                 lower.contains("what's for") || lower.contains("recommend") ||
@@ -417,6 +429,65 @@ public class PantryActivity extends AppCompatActivity
     private void scrollToBottom() {
         chatRecyclerView.post(() ->
                 chatRecyclerView.smoothScrollToPosition(messages.size() - 1));
+    }
+
+    // ── Ingredient Suggestions ─────────────────────────────────────────────────
+
+    private String extractIngredient(String lower) {
+        int idx = lower.indexOf(" with ");
+        if (idx >= 0) {
+            String after = lower.substring(idx + 6).trim();
+            return after.isEmpty() ? null : after;
+        }
+        idx = lower.indexOf("using ");
+        if (idx >= 0) {
+            String after = lower.substring(idx + 6).trim();
+            return after.isEmpty() ? null : after;
+        }
+        return null;
+    }
+
+    private void handleIngredientSuggestion(String ingredient) {
+        ChatMessage loadingMsg = new ChatMessage(ChatMessage.Type.LOADING, "");
+        messages.add(loadingMsg);
+        final int loadingIndex = messages.size() - 1;
+        chatAdapter.notifyItemInserted(loadingIndex);
+        scrollToBottom();
+
+        setWaiting(true);
+
+        spoonacularService.searchRecipes(ingredient, 5, BuildConfig.SPOONACULAR_KEY)
+                .enqueue(new Callback<RecipeSearchResponse>() {
+                    @Override
+                    public void onResponse(Call<RecipeSearchResponse> call,
+                                           Response<RecipeSearchResponse> response) {
+                        setWaiting(false);
+                        messages.remove(loadingIndex);
+                        chatAdapter.notifyItemRemoved(loadingIndex);
+
+                        if (response.isSuccessful() && response.body() != null) {
+                            List<Recipe> results = response.body().getResults();
+                            if (results != null && !results.isEmpty()) {
+                                messages.add(new ChatMessage(results));
+                                chatAdapter.notifyItemInserted(messages.size() - 1);
+                                scrollToBottom();
+                            } else {
+                                addAiMessage("I couldn't find any recipes with \"" + ingredient +
+                                        "\". Try a different ingredient?");
+                            }
+                        } else {
+                            addAiMessage("Couldn't reach the recipe search right now. Try again in a moment!");
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
+                        setWaiting(false);
+                        messages.remove(loadingIndex);
+                        chatAdapter.notifyItemRemoved(loadingIndex);
+                        addAiMessage("Network error: " + t.getMessage());
+                    }
+                });
     }
 
     // ── Meal History ───────────────────────────────────────────────────────────
