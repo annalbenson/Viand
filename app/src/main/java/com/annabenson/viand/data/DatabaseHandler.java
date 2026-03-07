@@ -16,7 +16,9 @@ import com.annabenson.viand.models.UserAccount;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
 
@@ -539,6 +541,21 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
             cursor.close();
         }
         return tags;
+    }
+
+    public Map<String, Float> loadIngredientProfile(int userId) {
+        Map<String, Float> scores = new HashMap<>();
+        String select = "SELECT " + TASTE_TAG + "," + TASTE_SCORE +
+                " FROM " + TABLE_TASTE_PROFILE +
+                " WHERE " + USER_ID_FK + "=? AND " + TASTE_TAG_TYPE + "='ingredient'";
+        Cursor cursor = database.rawQuery(select, new String[]{String.valueOf(userId)});
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                scores.put(cursor.getString(0), cursor.getFloat(1));
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return scores;
     }
 
     // ── Preference Prompt Log ──────────────────────────────────────────────────

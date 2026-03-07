@@ -42,6 +42,9 @@
         <activity
             android:name=".activities.AccountSettingsActivity"
             android:parentActivityName=".activities.HomeActivity" />
+        <activity
+            android:name=".activities.CuisinePreferencesActivity"
+            android:parentActivityName=".activities.TasteProfileActivity" />
     </application>
 
 </manifest>

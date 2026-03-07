@@ -1,32 +1,78 @@
 package com.annabenson.viand.activities;
 
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.MenuItem;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.SeekBar;
+import android.view.View;
+import android.widget.GridLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
 
 import com.annabenson.viand.R;
 import com.annabenson.viand.data.DatabaseHandler;
-import com.annabenson.viand.engine.TasteEngine;
-import com.annabenson.viand.models.TasteTag;
+import com.google.android.material.button.MaterialButton;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public class TasteProfileActivity extends AppCompatActivity {
 
-    private LinearLayout sliderContainer;
+    static class Ingredient {
+        final String emoji;
+        final String name;
+        Ingredient(String emoji, String name) { this.emoji = emoji; this.name = name; }
+    }
+
+    static final List<Ingredient> INGREDIENTS = Arrays.asList(
+            new Ingredient("🧄", "Garlic"),
+            new Ingredient("🍗", "Chicken"),
+            new Ingredient("🥩", "Beef"),
+            new Ingredient("🐷", "Pork"),
+            new Ingredient("🐟", "Fish"),
+            new Ingredient("🍤", "Shrimp"),
+            new Ingredient("🍄", "Mushrooms"),
+            new Ingredient("🍝", "Pasta"),
+            new Ingredient("🍚", "Rice"),
+            new Ingredient("🥑", "Avocado"),
+            new Ingredient("🥚", "Eggs"),
+            new Ingredient("🧀", "Cheese"),
+            new Ingredient("🍅", "Tomatoes"),
+            new Ingredient("🧅", "Onion"),
+            new Ingredient("🍋", "Lemon"),
+            new Ingredient("🧈", "Butter"),
+            new Ingredient("🌶️", "Spicy food"),
+            new Ingredient("🥓", "Bacon"),
+            new Ingredient("🫚", "Olive oil"),
+            new Ingredient("🥦", "Broccoli"),
+            new Ingredient("🍠", "Sweet potato"),
+            new Ingredient("🫘", "Beans"),
+            new Ingredient("🥜", "Nuts"),
+            new Ingredient("🥥", "Coconut"),
+            new Ingredient("🍫", "Chocolate")
+    );
+
+    private int currentIndex = 0;
+    private Map<String, Float> existingScores;
     private DatabaseHandler databaseHandler;
     private int userId;
 
-    private final Map<String, SeekBar> seekBars = new HashMap<>();
+    private TextView tvProgress;
+    private TextView tvEmoji;
+    private TextView tvIngredientName;
+    private CardView cardIngredient;
+    private GridLayout buttonGrid;
+    private MaterialButton btnLove;
+    private MaterialButton btnLike;
+    private MaterialButton btnNeutral;
+    private MaterialButton btnDislike;
+    private TextView tvComplete;
+    private MaterialButton btnRetake;
+    private MaterialButton btnCuisines;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,96 +83,100 @@ public class TasteProfileActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("My Taste Profile");
+            getSupportActionBar().setTitle("Taste Profile");
         }
 
-        sliderContainer = findViewById(R.id.sliderContainer);
-        Button saveButton = findViewById(R.id.saveTasteProfileButton);
+        tvProgress = findViewById(R.id.tvProgress);
+        tvEmoji = findViewById(R.id.tvEmoji);
+        tvIngredientName = findViewById(R.id.tvIngredientName);
+        cardIngredient = findViewById(R.id.cardIngredient);
+        buttonGrid = findViewById(R.id.buttonGrid);
+        btnLove = findViewById(R.id.btnLove);
+        btnLike = findViewById(R.id.btnLike);
+        btnNeutral = findViewById(R.id.btnNeutral);
+        btnDislike = findViewById(R.id.btnDislike);
+        tvComplete = findViewById(R.id.tvComplete);
+        btnRetake = findViewById(R.id.btnRetake);
+        btnCuisines = findViewById(R.id.btnCuisines);
 
         databaseHandler = new DatabaseHandler(this);
         userId = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE)
                 .getInt(LoginActivity.KEY_USER_ID, -1);
 
-        // Load existing scores into a lookup map
-        List<TasteTag> profile = databaseHandler.loadCuisineProfile(userId);
-        Map<String, Float> scoreMap = new HashMap<>();
-        for (TasteTag tag : profile) {
-            scoreMap.put(tag.getTag(), tag.getScore());
-        }
+        existingScores = databaseHandler.loadIngredientProfile(userId);
 
-        // Build one slider row per cuisine in the graph
-        for (String cuisine : TasteEngine.CUISINE_GRAPH.keySet()) {
-            Float existing = scoreMap.get(cuisine);
-            float score = existing != null ? existing : 0f;
-            addSliderRow(cuisine, score);
-        }
+        btnLove.setOnClickListener(v -> onRatingSelected(10f));
+        btnLike.setOnClickListener(v -> onRatingSelected(7f));
+        btnNeutral.setOnClickListener(v -> onRatingSelected(4f));
+        btnDislike.setOnClickListener(v -> onRatingSelected(1f));
 
-        saveButton.setOnClickListener(v -> {
-            for (Map.Entry<String, SeekBar> entry : seekBars.entrySet()) {
-                databaseHandler.setTasteScore(
-                        userId, entry.getKey(), "cuisine", entry.getValue().getProgress());
-            }
-            finish();
-        });
-    }
-
-    private void addSliderRow(String cuisine, float currentScore) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-
-        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        int margin = dpToPx(8);
-        rowParams.setMargins(0, 0, 0, margin);
-        row.setLayoutParams(rowParams);
-
-        // Cuisine label
-        TextView label = new TextView(this);
-        label.setText(cuisine);
-        label.setTextSize(14f);
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
-                dpToPx(130), LinearLayout.LayoutParams.WRAP_CONTENT);
-        label.setLayoutParams(labelParams);
-        row.addView(label);
-
-        // SeekBar (0–10)
-        SeekBar seekBar = new SeekBar(this);
-        seekBar.setMax(10);
-        seekBar.setProgress(Math.min(10, Math.max(0, (int) currentScore)));
-        LinearLayout.LayoutParams seekParams = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        seekParams.setMargins(dpToPx(8), 0, dpToPx(8), 0);
-        seekBar.setLayoutParams(seekParams);
-        seekBars.put(cuisine, seekBar);
-        row.addView(seekBar);
-
-        // Value display
-        TextView valueText = new TextView(this);
-        valueText.setText(String.valueOf(seekBar.getProgress()));
-        valueText.setTextSize(14f);
-        LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
-                dpToPx(30), LinearLayout.LayoutParams.WRAP_CONTENT);
-        valueParams.gravity = Gravity.CENTER_VERTICAL;
-        valueText.setLayoutParams(valueParams);
-        row.addView(valueText);
-
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
-                valueText.setText(String.valueOf(progress));
-            }
-            @Override public void onStartTrackingTouch(SeekBar sb) {}
-            @Override public void onStopTrackingTouch(SeekBar sb) {}
+        btnRetake.setOnClickListener(v -> {
+            currentIndex = 0;
+            showQuizViews();
+            showIngredient(0);
         });
 
-        sliderContainer.addView(row);
+        btnCuisines.setOnClickListener(v ->
+                startActivity(new Intent(this, CuisinePreferencesActivity.class)));
+
+        showIngredient(0);
     }
 
-    private int dpToPx(int dp) {
-        float density = getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
+    private void showIngredient(int index) {
+        tvProgress.setText((index + 1) + " of " + INGREDIENTS.size());
+        tvEmoji.setText(INGREDIENTS.get(index).emoji);
+        tvIngredientName.setText(INGREDIENTS.get(index).name);
+        resetButtonStyles();
+        Float existing = existingScores.get(INGREDIENTS.get(index).name);
+        if (existing != null) highlightButton(existing);
+    }
+
+    private void onRatingSelected(float score) {
+        String name = INGREDIENTS.get(currentIndex).name;
+        databaseHandler.setTasteScore(userId, name, "ingredient", score);
+        existingScores.put(name, score);
+        currentIndex++;
+        if (currentIndex < INGREDIENTS.size()) {
+            showIngredient(currentIndex);
+        } else {
+            showCompletion();
+        }
+    }
+
+    private void resetButtonStyles() {
+        for (MaterialButton btn : new MaterialButton[]{btnLove, btnLike, btnNeutral, btnDislike}) {
+            btn.setBackgroundColor(Color.TRANSPARENT);
+            btn.setTextColor(getResources().getColor(com.google.android.material.R.color.design_default_color_primary, getTheme()));
+        }
+    }
+
+    private void highlightButton(float score) {
+        MaterialButton target;
+        if (score >= 9f) target = btnLove;
+        else if (score >= 6f) target = btnLike;
+        else if (score >= 3f) target = btnNeutral;
+        else target = btnDislike;
+
+        target.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.design_default_color_primary, getTheme()));
+        target.setTextColor(Color.WHITE);
+    }
+
+    private void showCompletion() {
+        cardIngredient.setVisibility(View.GONE);
+        buttonGrid.setVisibility(View.GONE);
+        tvProgress.setVisibility(View.GONE);
+        tvComplete.setVisibility(View.VISIBLE);
+        btnRetake.setVisibility(View.VISIBLE);
+        btnCuisines.setVisibility(View.VISIBLE);
+    }
+
+    private void showQuizViews() {
+        cardIngredient.setVisibility(View.VISIBLE);
+        buttonGrid.setVisibility(View.VISIBLE);
+        tvProgress.setVisibility(View.VISIBLE);
+        tvComplete.setVisibility(View.GONE);
+        btnRetake.setVisibility(View.GONE);
+        btnCuisines.setVisibility(View.GONE);
     }
 
     @Override
