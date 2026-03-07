@@ -321,6 +321,43 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         return "";
     }
 
+    // Replaces a seeded (negative-ID) recipe with real Spoonacular data in both
+    // FavoritesTable and MealLogTable. Because RecipeId is part of the favorites PK,
+    // we INSERT the real row then DELETE the fake one instead of updating in place.
+    public void updateSeedRecipe(int userId, int fakeId, int realId, String title, String imageUrl) {
+        Cursor c = database.rawQuery(
+                "SELECT " + RECIPE_MEAL_TYPE + "," + RECIPE_RATING +
+                " FROM " + TABLE_FAVORITES +
+                " WHERE " + USER_ID_FK + "=? AND " + RECIPE_ID + "=?",
+                new String[]{String.valueOf(userId), String.valueOf(fakeId)});
+        if (c != null && c.moveToFirst()) {
+            String mealType = c.getString(0);
+            String rating   = c.getString(1);
+            c.close();
+            ContentValues cv = new ContentValues();
+            cv.put(USER_ID_FK,       userId);
+            cv.put(RECIPE_ID,        realId);
+            cv.put(RECIPE_TITLE,     title);
+            cv.put(RECIPE_IMAGE_URL, imageUrl);
+            cv.put(RECIPE_MEAL_TYPE, mealType);
+            cv.put(RECIPE_RATING,    rating);
+            database.insertWithOnConflict(TABLE_FAVORITES, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+            database.delete(TABLE_FAVORITES,
+                    USER_ID_FK + "=? AND " + RECIPE_ID + "=?",
+                    new String[]{String.valueOf(userId), String.valueOf(fakeId)});
+        } else {
+            if (c != null) c.close();
+        }
+        // Update meal log rows that referenced the fake ID
+        ContentValues logCv = new ContentValues();
+        logCv.put(MEAL_LOG_RECIPE_ID, realId);
+        logCv.put(MEAL_LOG_TITLE,     title);
+        logCv.put(MEAL_LOG_IMAGE,     imageUrl);
+        database.update(TABLE_MEAL_LOG, logCv,
+                USER_ID_FK + "=? AND " + MEAL_LOG_RECIPE_ID + "=?",
+                new String[]{String.valueOf(userId), String.valueOf(fakeId)});
+    }
+
     public void updateDietaryPreferences(int userId, String prefs) {
         ContentValues values = new ContentValues();
         values.put(DIETARY_PREFS, prefs);
@@ -576,33 +613,34 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         if (!loadFavorites(userId).isEmpty()) return;
         if (!loadRecentMeals(userId, 365).isEmpty()) return;
 
-        // userId, recipeId, title, image, mealType, rating
+        // Negative IDs mark local-only seed recipes; RecipeDetailActivity skips
+        // the Spoonacular fetch for recipeId <= 0 so these show gracefully.
         Object[][] favs = {
-            { 900001, "Avocado Toast",           "", "Breakfast", "liked"    },
-            { 900002, "Fluffy Pancakes",          "", "Breakfast", "liked"    },
-            { 900003, "Shakshuka",                "", "Breakfast", "neutral"  },
-            { 900004, "Overnight Oats",           "", "Breakfast", "liked"    },
-            { 900005, "Breakfast Burrito",        "", "Breakfast", "disliked" },
-            { 900011, "Chicken Caesar Salad",     "", "Lunch",     "liked"    },
-            { 900012, "Grilled Cheese Sandwich",  "", "Lunch",     "liked"    },
-            { 900013, "Tomato Soup",              "", "Lunch",     "neutral"  },
-            { 900014, "Falafel Wrap",             "", "Lunch",     "liked"    },
-            { 900015, "Greek Salad",              "", "Lunch",     "disliked" },
-            { 900021, "Spaghetti Bolognese",      "", "Dinner",    "liked"    },
-            { 900022, "Chicken Tikka Masala",     "", "Dinner",    "liked"    },
-            { 900023, "Beef Tacos",               "", "Dinner",    "neutral"  },
-            { 900024, "Salmon with Vegetables",   "", "Dinner",    "liked"    },
-            { 900025, "Mushroom Risotto",         "", "Dinner",    "disliked" },
-            { 900031, "Chocolate Chip Cookies",   "", "Dessert",   "liked"    },
-            { 900032, "Cheesecake",               "", "Dessert",   "liked"    },
-            { 900033, "Tiramisu",                 "", "Dessert",   "liked"    },
-            { 900034, "Apple Pie",                "", "Dessert",   "neutral"  },
-            { 900035, "Brownies",                 "", "Dessert",   "disliked" },
-            { 900041, "Guacamole",                "", "Snack",     "liked"    },
-            { 900042, "Hummus and Pita",          "", "Snack",     "neutral"  },
-            { 900043, "Bruschetta",               "", "Snack",     "liked"    },
-            { 900044, "Deviled Eggs",             "", "Snack",     "neutral"  },
-            { 900045, "Caprese Salad",            "", "Snack",     "disliked" },
+            { -900001, "Avocado Toast",           "", "Breakfast", "liked"    },
+            { -900002, "Fluffy Pancakes",          "", "Breakfast", "liked"    },
+            { -900003, "Shakshuka",                "", "Breakfast", "neutral"  },
+            { -900004, "Overnight Oats",           "", "Breakfast", "liked"    },
+            { -900005, "Breakfast Burrito",        "", "Breakfast", "disliked" },
+            { -900011, "Chicken Caesar Salad",     "", "Lunch",     "liked"    },
+            { -900012, "Grilled Cheese Sandwich",  "", "Lunch",     "liked"    },
+            { -900013, "Tomato Soup",              "", "Lunch",     "neutral"  },
+            { -900014, "Falafel Wrap",             "", "Lunch",     "liked"    },
+            { -900015, "Greek Salad",              "", "Lunch",     "disliked" },
+            { -900021, "Spaghetti Bolognese",      "", "Dinner",    "liked"    },
+            { -900022, "Chicken Tikka Masala",     "", "Dinner",    "liked"    },
+            { -900023, "Beef Tacos",               "", "Dinner",    "neutral"  },
+            { -900024, "Salmon with Vegetables",   "", "Dinner",    "liked"    },
+            { -900025, "Mushroom Risotto",         "", "Dinner",    "disliked" },
+            { -900031, "Chocolate Chip Cookies",   "", "Dessert",   "liked"    },
+            { -900032, "Cheesecake",               "", "Dessert",   "liked"    },
+            { -900033, "Tiramisu",                 "", "Dessert",   "liked"    },
+            { -900034, "Apple Pie",                "", "Dessert",   "neutral"  },
+            { -900035, "Brownies",                 "", "Dessert",   "disliked" },
+            { -900041, "Guacamole",                "", "Snack",     "liked"    },
+            { -900042, "Hummus and Pita",          "", "Snack",     "neutral"  },
+            { -900043, "Bruschetta",               "", "Snack",     "liked"    },
+            { -900044, "Deviled Eggs",             "", "Snack",     "neutral"  },
+            { -900045, "Caprese Salad",            "", "Snack",     "disliked" },
         };
         for (Object[] f : favs) {
             ContentValues cv = new ContentValues();
@@ -617,31 +655,31 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
 
         // recipeId, title, mealType, daysAgo
         Object[][] logs = {
-            { 900001, "Avocado Toast",          "Breakfast",  1  },
-            { 900011, "Chicken Caesar Salad",   "Lunch",      1  },
-            { 900021, "Spaghetti Bolognese",    "Dinner",     1  },
-            { 900002, "Fluffy Pancakes",        "Breakfast",  3  },
-            { 900024, "Salmon with Vegetables", "Dinner",     3  },
-            { 900031, "Chocolate Chip Cookies", "Dessert",    4  },
-            { 900013, "Tomato Soup",            "Lunch",      5  },
-            { 900022, "Chicken Tikka Masala",   "Dinner",     5  },
-            { 900041, "Guacamole",              "Snack",      6  },
-            { 900003, "Shakshuka",              "Breakfast",  8  },
-            { 900014, "Falafel Wrap",           "Lunch",      8  },
-            { 900023, "Beef Tacos",             "Dinner",     9  },
-            { 900032, "Cheesecake",             "Dessert",    10 },
-            { 900004, "Overnight Oats",         "Breakfast",  12 },
-            { 900043, "Bruschetta",             "Snack",      13 },
-            { 900025, "Mushroom Risotto",       "Dinner",     14 },
-            { 900012, "Grilled Cheese Sandwich","Lunch",      16 },
-            { 900033, "Tiramisu",               "Dessert",    18 },
-            { 900021, "Spaghetti Bolognese",    "Dinner",     19 },
-            { 900044, "Deviled Eggs",           "Snack",      21 },
-            { 900001, "Avocado Toast",          "Breakfast",  22 },
-            { 900024, "Salmon with Vegetables", "Dinner",     23 },
-            { 900015, "Greek Salad",            "Lunch",      25 },
-            { 900034, "Apple Pie",              "Dessert",    27 },
-            { 900005, "Breakfast Burrito",      "Breakfast",  29 },
+            { -900001, "Avocado Toast",          "Breakfast",  1  },
+            { -900011, "Chicken Caesar Salad",   "Lunch",      1  },
+            { -900021, "Spaghetti Bolognese",    "Dinner",     1  },
+            { -900002, "Fluffy Pancakes",        "Breakfast",  3  },
+            { -900024, "Salmon with Vegetables", "Dinner",     3  },
+            { -900031, "Chocolate Chip Cookies", "Dessert",    4  },
+            { -900013, "Tomato Soup",            "Lunch",      5  },
+            { -900022, "Chicken Tikka Masala",   "Dinner",     5  },
+            { -900041, "Guacamole",              "Snack",      6  },
+            { -900003, "Shakshuka",              "Breakfast",  8  },
+            { -900014, "Falafel Wrap",           "Lunch",      8  },
+            { -900023, "Beef Tacos",             "Dinner",     9  },
+            { -900032, "Cheesecake",             "Dessert",    10 },
+            { -900004, "Overnight Oats",         "Breakfast",  12 },
+            { -900043, "Bruschetta",             "Snack",      13 },
+            { -900025, "Mushroom Risotto",       "Dinner",     14 },
+            { -900012, "Grilled Cheese Sandwich","Lunch",      16 },
+            { -900033, "Tiramisu",               "Dessert",    18 },
+            { -900021, "Spaghetti Bolognese",    "Dinner",     19 },
+            { -900044, "Deviled Eggs",           "Snack",      21 },
+            { -900001, "Avocado Toast",          "Breakfast",  22 },
+            { -900024, "Salmon with Vegetables", "Dinner",     23 },
+            { -900015, "Greek Salad",            "Lunch",      25 },
+            { -900034, "Apple Pie",              "Dessert",    27 },
+            { -900005, "Breakfast Burrito",      "Breakfast",  29 },
         };
         long now = System.currentTimeMillis() / 1000;
         for (Object[] log : logs) {

@@ -86,11 +86,18 @@ public class RecipeDetailActivity extends AppCompatActivity {
             detailTitle.setText(recipeTitle);
         }
 
-        if (recipeId != -1) {
+        if (recipeId > 0) {
             fetchRecipeDetail(recipeId);
-        } else {
+        } else if (recipeId == -1) {
             Toast.makeText(this, "Invalid recipe", Toast.LENGTH_SHORT).show();
             finish();
+        } else {
+            // Local-only recipe (negative ID) — show title, disable action buttons
+            instructionsText.setText("No additional details available for this saved recipe.");
+            saveToFavoritesButton.setEnabled(false);
+            createMyVersionButton.setEnabled(false);
+            logMealButton.setEnabled(false);
+            addToMealPlanButton.setEnabled(false);
         }
 
         saveToFavoritesButton.setOnClickListener(v -> {

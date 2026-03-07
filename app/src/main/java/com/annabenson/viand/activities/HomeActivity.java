@@ -1,6 +1,7 @@
 package com.annabenson.viand.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.View;
@@ -122,8 +123,60 @@ public class HomeActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         databaseHandler.seedTestDataIfNeeded(currentUserId);
+        fetchSeedDataIfNeeded();
         loadFavorites();
         loadCustomRecipes();
+    }
+
+    // In DEBUG builds, fetches real Spoonacular data for any seeded (negative-ID)
+    // favorites and updates the DB. Runs once per user via a SharedPrefs flag.
+    private void fetchSeedDataIfNeeded() {
+        if (!BuildConfig.DEBUG) return;
+        SharedPreferences prefs = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
+        String flagKey = "seed_fetched_" + currentUserId;
+        if (prefs.getBoolean(flagKey, false)) return;
+
+        List<Recipe> seeded = new ArrayList<>();
+        for (Recipe r : databaseHandler.loadFavorites(currentUserId)) {
+            if (r.getId() < 0) seeded.add(r);
+        }
+        if (seeded.isEmpty()) {
+            prefs.edit().putBoolean(flagKey, true).apply();
+            return;
+        }
+
+        int[] remaining = {seeded.size()};
+        boolean[] anyFailed = {false};
+        for (Recipe seed : seeded) {
+            int fakeId = seed.getId();
+            spoonacularService.searchRecipes(seed.getTitle(), 1, BuildConfig.SPOONACULAR_KEY)
+                    .enqueue(new Callback<RecipeSearchResponse>() {
+                        @Override
+                        public void onResponse(Call<RecipeSearchResponse> call,
+                                               Response<RecipeSearchResponse> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                List<Recipe> results = response.body().getResults();
+                                if (results != null && !results.isEmpty()) {
+                                    Recipe real = results.get(0);
+                                    databaseHandler.updateSeedRecipe(currentUserId, fakeId,
+                                            real.getId(), real.getTitle(), real.getImage());
+                                }
+                            } else {
+                                anyFailed[0] = true;
+                            }
+                            if (--remaining[0] == 0) {
+                                if (!anyFailed[0]) prefs.edit().putBoolean(flagKey, true).apply();
+                                loadFavorites();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
+                            anyFailed[0] = true;
+                            if (--remaining[0] == 0) loadFavorites();
+                        }
+                    });
+        }
     }
 
     // ── Search results ────────────────────────────────────────────────────────
