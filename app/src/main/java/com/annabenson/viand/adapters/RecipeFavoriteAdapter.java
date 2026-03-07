@@ -2,11 +2,11 @@ package com.annabenson.viand.adapters;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -28,10 +28,9 @@ public class RecipeFavoriteAdapter extends RecyclerView.Adapter<RecipeFavoriteAd
     private static final String RATING_NEUTRAL  = "neutral";
     private static final String RATING_DISLIKED = "disliked";
 
-    private static final int COLOR_LIKED    = Color.parseColor("#4CAF50");
-    private static final int COLOR_NEUTRAL  = Color.parseColor("#FF9800");
-    private static final int COLOR_DISLIKED = Color.parseColor("#F44336");
-    private static final int COLOR_INACTIVE = Color.parseColor("#BBBBBB");
+    private static final float ALPHA_SELECTED   = 1.0f;
+    private static final float ALPHA_UNSELECTED = 0.3f;
+    private static final float ALPHA_UNRATED    = 0.6f;
 
     public interface OnDeleteListener {
         void onDelete(Recipe recipe, int position);
@@ -135,12 +134,18 @@ public class RecipeFavoriteAdapter extends RecyclerView.Adapter<RecipeFavoriteAd
     }
 
     private void applyRatingColors(FavoriteViewHolder holder, String rating) {
-        holder.btnThumbsUp.setTextColor(
-                RATING_LIKED.equals(rating)    ? COLOR_LIKED    : COLOR_INACTIVE);
-        holder.btnNeutral.setTextColor(
-                RATING_NEUTRAL.equals(rating)  ? COLOR_NEUTRAL  : COLOR_INACTIVE);
-        holder.btnThumbsDown.setTextColor(
-                RATING_DISLIKED.equals(rating) ? COLOR_DISLIKED : COLOR_INACTIVE);
+        if (rating == null || rating.isEmpty()) {
+            holder.btnThumbsUp.setAlpha(ALPHA_UNRATED);
+            holder.btnNeutral.setAlpha(ALPHA_UNRATED);
+            holder.btnThumbsDown.setAlpha(ALPHA_UNRATED);
+        } else {
+            holder.btnThumbsUp.setAlpha(
+                    RATING_LIKED.equals(rating)    ? ALPHA_SELECTED : ALPHA_UNSELECTED);
+            holder.btnNeutral.setAlpha(
+                    RATING_NEUTRAL.equals(rating)  ? ALPHA_SELECTED : ALPHA_UNSELECTED);
+            holder.btnThumbsDown.setAlpha(
+                    RATING_DISLIKED.equals(rating) ? ALPHA_SELECTED : ALPHA_UNSELECTED);
+        }
     }
 
     @Override
@@ -150,9 +155,9 @@ public class RecipeFavoriteAdapter extends RecyclerView.Adapter<RecipeFavoriteAd
         ImageView image;
         TextView mealTypeLabel;
         TextView title;
-        Button btnThumbsUp;
-        Button btnNeutral;
-        Button btnThumbsDown;
+        ImageButton btnThumbsUp;
+        ImageButton btnNeutral;
+        ImageButton btnThumbsDown;
         Button deleteButton;
 
         FavoriteViewHolder(View itemView) {

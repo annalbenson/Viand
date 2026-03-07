@@ -171,7 +171,7 @@ public class PantryActivity extends AppCompatActivity
         sendButton.setEnabled(false);
 
         if (TEST_MODE) {
-            sendTestModeRequest(loadingIndex);
+            sendTestModeRequest(text, loadingIndex);
         } else {
             sendGeminiRequest(text, loadingIndex);
         }
@@ -286,8 +286,35 @@ public class PantryActivity extends AppCompatActivity
 
     // ── Test / Gemini Mode ─────────────────────────────────────────────────────
 
-    private void sendTestModeRequest(int loadingIndex) {
-        spoonacularService.searchRecipes("Chicken Noodle Soup", 5, BuildConfig.SPOONACULAR_KEY)
+    private static final String[][] TEST_QUERIES = {
+        // Breakfast
+        { "avocado toast", "fluffy pancakes", "breakfast burrito", "overnight oats", "eggs benedict" },
+        // Lunch
+        { "chicken caesar salad", "grilled cheese sandwich", "tomato soup", "BLT wrap", "quinoa bowl" },
+        // Dinner
+        { "spaghetti bolognese", "chicken stir fry", "beef tacos", "salmon with vegetables", "chicken tikka masala" },
+        // Dessert
+        { "chocolate chip cookies", "cheesecake", "brownies", "apple pie", "tiramisu" },
+        // Snack
+        { "hummus and pita", "guacamole", "deviled eggs", "bruschetta", "caprese salad" },
+    };
+
+    private String pickTestQuery(String userText) {
+        String lower = userText.toLowerCase();
+        int category;
+        if (lower.contains("breakfast") || lower.contains("morning"))      category = 0;
+        else if (lower.contains("lunch"))                                  category = 1;
+        else if (lower.contains("dinner") || lower.contains("supper"))     category = 2;
+        else if (lower.contains("dessert") || lower.contains("sweet"))     category = 3;
+        else if (lower.contains("snack"))                                  category = 4;
+        else category = new Random().nextInt(TEST_QUERIES.length);
+        String[] pool = TEST_QUERIES[category];
+        return pool[new Random().nextInt(pool.length)];
+    }
+
+    private void sendTestModeRequest(String userText, int loadingIndex) {
+        String query = pickTestQuery(userText);
+        spoonacularService.searchRecipes(query, 5, BuildConfig.SPOONACULAR_KEY)
                 .enqueue(new Callback<RecipeSearchResponse>() {
                     @Override
                     public void onResponse(Call<RecipeSearchResponse> call,

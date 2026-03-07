@@ -15,6 +15,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 
 import com.annabenson.viand.BuildConfig;
 import com.annabenson.viand.data.DatabaseHandler;
@@ -34,6 +36,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
     private ImageView detailImage;
     private TextView detailTitle;
+    private ChipGroup tagsChipGroup;
     private LinearLayout ingredientsContainer;
     private TextView instructionsText;
     private Button saveToFavoritesButton;
@@ -54,6 +57,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
         detailImage = findViewById(com.annabenson.viand.R.id.detailImage);
         detailTitle = findViewById(com.annabenson.viand.R.id.detailTitle);
+        tagsChipGroup = findViewById(com.annabenson.viand.R.id.tagsChipGroup);
         ingredientsContainer = findViewById(com.annabenson.viand.R.id.ingredientsContainer);
         instructionsText = findViewById(com.annabenson.viand.R.id.instructionsText);
         saveToFavoritesButton = findViewById(com.annabenson.viand.R.id.saveToFavoritesButton);
@@ -168,6 +172,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
     private void populateUI(RecipeDetail detail) {
         detailTitle.setText(detail.getTitle());
+        populateTags(detail);
 
         Glide.with(this)
                 .load(detail.getImage())
@@ -225,6 +230,51 @@ public class RecipeDetailActivity extends AppCompatActivity {
             return stripHtml(detail.getSummary());
         }
         return sb.toString().trim();
+    }
+
+    private void populateTags(RecipeDetail detail) {
+        tagsChipGroup.removeAllViews();
+        // Collect: cuisines → dishTypes → diets (in that order, deduped)
+        java.util.LinkedHashSet<String> seen = new java.util.LinkedHashSet<>();
+        if (detail.getCuisines() != null) {
+            for (String s : detail.getCuisines()) seen.add(formatTag(s));
+        }
+        if (detail.getDishTypes() != null) {
+            for (String s : detail.getDishTypes()) seen.add(formatTag(s));
+        }
+        if (detail.getDiets() != null) {
+            for (String s : detail.getDiets()) seen.add(formatTag(s));
+        }
+        for (String tag : seen) {
+            if (tag.isEmpty()) continue;
+            Chip chip = new Chip(this);
+            chip.setText(tag);
+            chip.setClickable(false);
+            chip.setFocusable(false);
+            chip.setChipBackgroundColorResource(android.R.color.transparent);
+            tagsChipGroup.addView(chip);
+        }
+    }
+
+    private static String formatTag(String raw) {
+        if (raw == null) return "";
+        switch (raw.toLowerCase().trim()) {
+            case "gluten free":           return "gf";
+            case "dairy free":            return "df";
+            case "lacto ovo vegetarian":  return "vegetarian";
+            case "vegan":                 return "vegan";
+            case "vegetarian":            return "vegetarian";
+            case "ketogenic":             return "keto";
+            case "paleolithic":           return "paleo";
+            case "primal":                return "primal";
+            case "whole 30":
+            case "whole30":               return "whole30";
+            case "fodmap friendly":
+            case "low fodmap":            return "fodmap";
+            case "main course":
+            case "main dish":             return "main";
+            default:                      return raw.toLowerCase().trim();
+        }
     }
 
     private static String detectMealType(List<String> dishTypes) {

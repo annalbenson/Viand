@@ -5,7 +5,7 @@ An Android recipe discovery and cooking assistant app. Search for recipes, save 
 ## Features
 
 - **Recipe search** — powered by the Spoonacular API; horizontal card browse with images, ingredients, and step-by-step instructions
-- **Favorites** — save recipes to a local SQLite list, organized by meal type (Breakfast, Lunch, Dinner, Dessert, Snack); rate each with 👍 😐 👎 after you try it; tap the category label on any card to reassign it
+- **Favorites** — save recipes to a local SQLite list, organized by meal type (Breakfast, Lunch, Dinner, Dessert, Snack); rate each with custom thumbs-up / neutral / thumbs-down icons after you try it; tap the category label on any card to reassign it
 - **Create My Version** — customize any search result into your own recipe with editable title, ingredients, and instructions
 - **Vivian AI** — chat with an AI cooking assistant (Google Gemini 2.0 Flash) that suggests recipes based on what you have; ask "what sounds good?" or "help me decide" and Vivian returns three personalized picks:
   - *Your Recent Go-To* — a random saved favorite

@@ -1,5 +1,8 @@
 *.zip
 IconKitchen-Output/
+thumbs up icons/
+thumbs down icons/
+neutral thumb icons/
 material-theme/
 *.iml
 .gradle

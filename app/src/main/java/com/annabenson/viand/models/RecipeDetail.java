@@ -17,6 +17,9 @@ public class RecipeDetail {
     @SerializedName("summary")
     private String summary;
 
+    @SerializedName("diets")
+    private List<String> diets;
+
     @SerializedName("dishTypes")
     private List<String> dishTypes;
 
@@ -33,6 +36,7 @@ public class RecipeDetail {
     public String getTitle() { return title; }
     public String getImage() { return image; }
     public String getSummary() { return summary; }
+    public List<String> getDiets() { return diets; }
     public List<String> getDishTypes() { return dishTypes; }
     public List<String> getCuisines() { return cuisines; }
     public List<Ingredient> getExtendedIngredients() { return extendedIngredients; }

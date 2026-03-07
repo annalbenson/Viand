@@ -58,41 +58,38 @@
             android:paddingEnd="4dp"
             android:paddingBottom="4dp">
 
-            <Button
+            <ImageButton
                 android:id="@+id/btnThumbsUp"
                 android:layout_width="0dp"
                 android:layout_height="36dp"
                 android:layout_weight="1"
-                android:text="👍"
-                android:textSize="16sp"
-                android:minWidth="0dp"
-                android:paddingStart="0dp"
-                android:paddingEnd="0dp"
-                style="@style/Widget.MaterialComponents.Button.TextButton" />
+                android:src="@drawable/thumbs_up"
+                android:scaleType="fitCenter"
+                android:padding="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Liked" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/btnNeutral"
                 android:layout_width="0dp"
                 android:layout_height="36dp"
                 android:layout_weight="1"
-                android:text="😐"
-                android:textSize="16sp"
-                android:minWidth="0dp"
-                android:paddingStart="0dp"
-                android:paddingEnd="0dp"
-                style="@style/Widget.MaterialComponents.Button.TextButton" />
+                android:src="@drawable/neutral_thumb"
+                android:scaleType="fitCenter"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Okay" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/btnThumbsDown"
                 android:layout_width="0dp"
                 android:layout_height="36dp"
                 android:layout_weight="1"
-                android:text="👎"
-                android:textSize="16sp"
-                android:minWidth="0dp"
-                android:paddingStart="0dp"
-                android:paddingEnd="0dp"
-                style="@style/Widget.MaterialComponents.Button.TextButton" />
+                android:src="@drawable/thumbs_down"
+                android:scaleType="fitCenter"
+                android:padding="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Disliked" />
 
         </LinearLayout>
 
