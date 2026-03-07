@@ -36,11 +36,8 @@ import com.annabenson.viand.network.SpoonacularService;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -345,24 +342,8 @@ public class VivianActivity extends AppCompatActivity
                 });
     }
 
-    // Maps dietary preference strings to Spoonacular diet + intolerances params.
-    // Returns [diet, intolerances] — either may be null if not applicable.
     private String[] deriveDietaryFilters(String prefsStr) {
-        if (prefsStr == null || prefsStr.isEmpty()) return new String[]{null, null};
-        Set<String> prefs = new HashSet<>(Arrays.asList(prefsStr.split(",")));
-
-        // Spoonacular's diet param: pick strictest applicable
-        String diet = null;
-        if (prefs.contains("Vegan")) diet = "vegan";
-        else if (prefs.contains("Vegetarian")) diet = "vegetarian";
-
-        // Spoonacular's intolerances param: comma-separated
-        List<String> intolerances = new ArrayList<>();
-        if (prefs.contains("Gluten Free")) intolerances.add("gluten");
-        if (prefs.contains("Dairy Free"))  intolerances.add("dairy");
-        if (prefs.contains("Nut Free"))    { intolerances.add("peanut"); intolerances.add("tree nut"); }
-
-        return new String[]{diet, intolerances.isEmpty() ? null : String.join(",", intolerances)};
+        return com.annabenson.viand.utils.DietaryFilterHelper.deriveDietaryFilters(prefsStr);
     }
 
     // ── Test / Gemini Mode ─────────────────────────────────────────────────────
