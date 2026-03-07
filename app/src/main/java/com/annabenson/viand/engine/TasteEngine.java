@@ -6,6 +6,7 @@ import com.annabenson.viand.models.TasteTag;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Set;
 public class TasteEngine {
 
     public static final Map<String, List<String>> CUISINE_GRAPH;
+    public static final Map<String, List<String>> INGREDIENT_CUISINE_MAP;
 
     private static final String[] PROMPT_TOPICS = {
         "fish", "spicy dishes", "vegetarian meals", "Italian food", "Japanese food",
@@ -50,12 +52,72 @@ public class TasteEngine {
         graph.put("German",         Arrays.asList("European"));
         graph.put("Nordic",         Arrays.asList("European"));
         CUISINE_GRAPH = Collections.unmodifiableMap(graph);
+
+        Map<String, List<String>> imap = new LinkedHashMap<>();
+        imap.put("Garlic",       Arrays.asList("Italian", "Mediterranean", "Greek"));
+        imap.put("Chicken",      Arrays.asList("Indian", "American", "Italian"));
+        imap.put("Beef",         Arrays.asList("American", "Korean", "BBQ"));
+        imap.put("Pork",         Arrays.asList("BBQ", "Chinese", "German"));
+        imap.put("Fish",         Arrays.asList("Japanese", "Thai", "Mediterranean", "Nordic"));
+        imap.put("Shrimp",       Arrays.asList("Cajun", "Thai", "Caribbean"));
+        imap.put("Mushrooms",    Arrays.asList("Italian", "French", "Asian"));
+        imap.put("Pasta",        Arrays.asList("Italian"));
+        imap.put("Rice",         Arrays.asList("Japanese", "Chinese", "Thai", "Indian"));
+        imap.put("Avocado",      Arrays.asList("Mexican", "American"));
+        imap.put("Eggs",         Arrays.asList("French", "American"));
+        imap.put("Cheese",       Arrays.asList("Italian", "French", "Mediterranean"));
+        imap.put("Tomatoes",     Arrays.asList("Italian", "Mediterranean", "Mexican"));
+        imap.put("Onion",        Arrays.asList("Indian", "French", "American"));
+        imap.put("Lemon",        Arrays.asList("Mediterranean", "Greek", "Middle Eastern"));
+        imap.put("Butter",       Arrays.asList("French", "European"));
+        imap.put("Spicy food",   Arrays.asList("Thai", "Indian", "Mexican", "Korean", "Cajun"));
+        imap.put("Bacon",        Arrays.asList("American", "BBQ", "Southern"));
+        imap.put("Olive oil",    Arrays.asList("Mediterranean", "Italian", "Greek"));
+        imap.put("Broccoli",     Arrays.asList("Chinese", "Asian", "American"));
+        imap.put("Sweet potato", Arrays.asList("American", "African", "Southern"));
+        imap.put("Beans",        Arrays.asList("Mexican", "Latin American", "African"));
+        imap.put("Nuts",         Arrays.asList("Middle Eastern", "Moroccan", "Indian"));
+        imap.put("Coconut",      Arrays.asList("Thai", "Indian", "Caribbean"));
+        imap.put("Chocolate",    Arrays.asList("French", "Italian", "American"));
+        INGREDIENT_CUISINE_MAP = Collections.unmodifiableMap(imap);
     }
 
     public static String getTopCuisine(List<TasteTag> profile) {
         if (profile == null || profile.isEmpty()) return null;
         // loadCuisineProfile returns list sorted by score desc
         return profile.get(0).getTag();
+    }
+
+    public static String getTopCuisineWithIngredients(List<TasteTag> cuisineProfile,
+                                                       Map<String, Float> ingredientProfile) {
+        // Seed scores from cuisine profile
+        Map<String, Float> scores = new HashMap<>();
+        for (TasteTag tag : cuisineProfile) {
+            if (CUISINE_GRAPH.containsKey(tag.getTag())) {
+                scores.put(tag.getTag(), tag.getScore());
+            }
+        }
+
+        // Blend in ingredient boosts: (score - 4) / 6 * 2 maps [1,10] → [−1, +2], neutral=0
+        for (Map.Entry<String, Float> entry : ingredientProfile.entrySet()) {
+            List<String> cuisines = INGREDIENT_CUISINE_MAP.get(entry.getKey());
+            if (cuisines == null) continue;
+            float boost = (entry.getValue() - 4f) / 6f * 2f;
+            for (String cuisine : cuisines) {
+                scores.put(cuisine, scores.getOrDefault(cuisine, 0f) + boost);
+            }
+        }
+
+        String best = null;
+        float bestScore = Float.NEGATIVE_INFINITY;
+        for (String cuisine : CUISINE_GRAPH.keySet()) {
+            float s = scores.getOrDefault(cuisine, 0f);
+            if (s > bestScore) {
+                bestScore = s;
+                best = cuisine;
+            }
+        }
+        return best;
     }
 
     public static List<String> getSimilarCuisines(String cuisine) {

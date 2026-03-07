@@ -25,6 +25,7 @@ import com.annabenson.viand.models.Recipe;
 import com.annabenson.viand.network.RecipeSearchResponse;
 import com.annabenson.viand.network.RetrofitClient;
 import com.annabenson.viand.network.SpoonacularService;
+import com.annabenson.viand.utils.DietaryFilterHelper;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -286,7 +287,9 @@ public class HomeActivity extends AppCompatActivity {
             Toast.makeText(this, "Enter a search term", Toast.LENGTH_SHORT).show();
             return;
         }
-        spoonacularService.searchRecipes(query, 10, BuildConfig.SPOONACULAR_KEY)
+        String prefsStr = databaseHandler.getDietaryPreferences(currentUserId);
+        String[] filters = DietaryFilterHelper.deriveDietaryFilters(prefsStr);
+        spoonacularService.searchRecipesWithDiet(query, 10, filters[0], filters[1], BuildConfig.SPOONACULAR_KEY)
                 .enqueue(new Callback<RecipeSearchResponse>() {
                     @Override
                     public void onResponse(Call<RecipeSearchResponse> call,

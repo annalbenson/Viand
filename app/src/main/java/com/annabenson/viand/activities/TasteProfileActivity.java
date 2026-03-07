@@ -119,7 +119,20 @@ public class TasteProfileActivity extends AppCompatActivity {
         btnCuisines.setOnClickListener(v ->
                 startActivity(new Intent(this, CuisinePreferencesActivity.class)));
 
-        showIngredient(0);
+        int startIndex = -1;
+        for (int i = 0; i < INGREDIENTS.size(); i++) {
+            if (!existingScores.containsKey(INGREDIENTS.get(i).name)) {
+                startIndex = i;
+                break;
+            }
+        }
+        if (startIndex == -1) {
+            currentIndex = INGREDIENTS.size();
+            showCompletion();
+        } else {
+            currentIndex = startIndex;
+            showIngredient(startIndex);
+        }
     }
 
     private void showIngredient(int index) {

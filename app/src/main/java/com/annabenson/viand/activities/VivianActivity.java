@@ -38,6 +38,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -254,9 +255,12 @@ public class VivianActivity extends AppCompatActivity
         final Recipe goToRecipe = favorites.isEmpty()
                 ? null : favorites.get(new Random().nextInt(favorites.size()));
 
-        // Determine cuisines from taste profile
+        // Determine cuisines from taste profile, blended with ingredient ratings
         List<TasteTag> profile = databaseHandler.loadCuisineProfile(userId);
-        String topCuisine = TasteEngine.getTopCuisine(profile);
+        Map<String, Float> ingredientProfile = databaseHandler.loadIngredientProfile(userId);
+        String topCuisine = ingredientProfile.isEmpty()
+                ? TasteEngine.getTopCuisine(profile)
+                : TasteEngine.getTopCuisineWithIngredients(profile, ingredientProfile);
 
         final String similarCuisine;
         final String adventurousCuisine;
