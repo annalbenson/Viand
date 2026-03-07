@@ -4,6 +4,23 @@ Items are roughly priority-ordered within each section. Move things around freel
 
 ---
 
+## Recipes
+
+- [ ] **Macro/nutrition display** — show calorie + protein counts on recipe detail screen (Spoonacular's `/recipes/{id}/nutritionWidget.json` endpoint)
+- [ ] **Recipe web clipper** — import a recipe from any URL (parse title, ingredients, steps)
+
+## Pantry
+
+- [ ] **Pantry tracker** — let users mark ingredients they have on hand; Vivian automatically factors pantry contents into suggestions
+
+## Grocery List
+
+- [ ] **Aisle-sorted grocery list** — group items by store section (produce, dairy, meat, etc.) instead of alphabetically
+
+## Household Sharing
+
+- [ ] **Shared meal plans and grocery lists** — multi-user households; shared plan visible to all members, collaborative grocery list
+
 ## Vivian / Recommendations
 
 - [ ] Apply dietary filtering to Vivian test-mode chat (`sendTestModeRequest` still calls unfiltered `searchRecipes`)
