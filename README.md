@@ -7,7 +7,7 @@ An Android recipe discovery and cooking assistant app. Search for recipes, save 
 - **Recipe search** — powered by the Spoonacular API; horizontal card browse with images, ingredients, and step-by-step instructions
 - **Favorites** — save recipes to a local SQLite list and revisit them anytime
 - **Create My Version** — customize any search result into your own recipe with editable title, ingredients, and instructions
-- **Vivian AI** — chat with an AI cooking assistant (Google Gemini 1.5 Flash) that suggests recipes based on what you have in your pantry or fridge; full multi-turn conversation
+- **Vivian AI** — chat with an AI cooking assistant (Google Gemini 2.0 Flash) that suggests recipes based on what you have in your pantry or fridge; full multi-turn conversation; clickable recipe suggestions open the full detail screen
 - **User accounts** — local login with email and password; dietary preferences (Gluten Free, Vegetarian, Vegan, Kosher, Halal, Dairy Free, Nut Free) saved at signup
 - **Remember me** — optional credential persistence so you skip the login screen on return visits
 - **Personalized greeting** — "Hello, [name]" banner with sign-out on the main screen
@@ -20,7 +20,7 @@ An Android recipe discovery and cooking assistant app. Search for recipes, save 
 - Retrofit 2 + Gson for all API calls
 - Glide for image loading
 - Spoonacular API — recipe search and detail
-- Google Gemini 1.5 Flash API — Vivian AI chat
+- Google Gemini 2.0 Flash API — Vivian AI chat
 
 ## Project Structure
 
@@ -47,6 +47,8 @@ app/src/main/java/com/annabenson/viand/
 4. Run on a device or emulator (API 21+)
 
 > `local.properties` is gitignored and must be created manually on each machine.
+
+> To develop without Gemini quota, set `TEST_MODE = true` in `PantryActivity.java` — Vivian will return Spoonacular search results instead of AI responses.
 
 ## Design Resources
 

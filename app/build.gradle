@@ -11,8 +11,6 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        // Fallback — overridden by GEMINI_KEY in local.properties via secrets plugin
-        buildConfigField "String", "GEMINI_KEY", '""'
     }
     buildFeatures {
         buildConfig true
