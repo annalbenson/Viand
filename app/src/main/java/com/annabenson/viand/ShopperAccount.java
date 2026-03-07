@@ -1,14 +1,12 @@
 package com.annabenson.viand;
 
-import java.util.ArrayList;
-
 public class ShopperAccount extends Account {
 
     private String firstName;
     private String lastName;
 
-    public ShopperAccount(String email, String password, String phoneNumber, ArrayList<Order> orderHistory, String firstName, String lastName) {
-        super(email, password, phoneNumber, orderHistory);
+    public ShopperAccount(String email, String password, String firstName, String lastName) {
+        super(email, password);
         this.firstName = firstName;
         this.lastName = lastName;
     }

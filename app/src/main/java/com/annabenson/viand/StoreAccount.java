@@ -1,13 +1,11 @@
 package com.annabenson.viand;
 
-import java.util.ArrayList;
-
 public class StoreAccount extends Account {
 
     private String storeName;
 
-    public StoreAccount(String email, String password, String phoneNumber, ArrayList<Order> orderHistory, String storeName) {
-        super(email, password, phoneNumber, orderHistory);
+    public StoreAccount(String email, String password, String storeName) {
+        super(email, password);
         this.storeName = storeName;
     }
 

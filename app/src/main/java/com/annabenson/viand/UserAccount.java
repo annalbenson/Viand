@@ -1,39 +1,21 @@
 package com.annabenson.viand;
 
-import java.util.ArrayList;
-
 public class UserAccount extends Account {
 
-    private String firstName;
-    private String lastName;
+    private String name;
+    private String dietaryPreferences; // comma-separated e.g. "Gluten Free,Vegan"
 
-    public UserAccount(String email, String password, String phoneNumber, ArrayList<Order> orderHistory, String firstName, String lastName) {
-        super(email, password, phoneNumber, orderHistory);
-        this.firstName = firstName;
-        this.lastName = lastName;
+    public UserAccount(String email, String password, String name, String dietaryPreferences) {
+        super(email, password);
+        this.name = name;
+        this.dietaryPreferences = dietaryPreferences;
     }
 
-    public String getFirstName() {
-        return firstName;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    @Override
-    public String toString() {
-        return "UserAccount{" + super.toString() +
-                "firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                '}';
+    public String getDietaryPreferences() { return dietaryPreferences; }
+    public void setDietaryPreferences(String dietaryPreferences) {
+        this.dietaryPreferences = dietaryPreferences;
     }
 }
