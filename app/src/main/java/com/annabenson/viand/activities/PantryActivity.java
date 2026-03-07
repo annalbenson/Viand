@@ -184,6 +184,13 @@ public class PantryActivity extends AppCompatActivity
             return;
         }
 
+        // Guard: only pass food-related messages to the AI
+        if (!isFoodRelated(lower)) {
+            addAiMessage("I'm just a cooking assistant, so I can only help with recipes, " +
+                    "ingredients, and meal planning. What are you in the mood to cook?");
+            return;
+        }
+
         ChatMessage loadingMsg = new ChatMessage(ChatMessage.Type.LOADING, "");
         messages.add(loadingMsg);
         int loadingIndex = messages.size() - 1;
@@ -197,6 +204,31 @@ public class PantryActivity extends AppCompatActivity
         } else {
             sendGeminiRequest(text, loadingIndex);
         }
+    }
+
+    private boolean isFoodRelated(String lower) {
+        String[] foodTerms = {
+            // actions
+            "cook", "bake", "fry", "roast", "boil", "grill", "saute", "sauté", "steam",
+            "simmer", "chop", "marinate", "season", "blend", "stir", "broil", "poach",
+            // meal concepts
+            "recipe", "meal", "dish", "food", "eat", "ate", "hungry", "dinner", "lunch",
+            "breakfast", "brunch", "snack", "dessert", "appetizer", "cuisine", "ingredient",
+            "leftovers", "pantry", "fridge", "freezer", "portion", "serving",
+            // common ingredients
+            "chicken", "beef", "pork", "fish", "shrimp", "salmon", "turkey", "lamb",
+            "pasta", "rice", "bread", "noodle", "egg", "tofu", "bean", "lentil",
+            "vegetable", "veggie", "fruit", "salad", "soup", "sauce", "stew", "curry",
+            "cheese", "milk", "butter", "cream", "flour", "sugar", "honey",
+            "garlic", "onion", "tomato", "potato", "pepper", "herb", "spice",
+            // taste / diet
+            "spicy", "sweet", "savory", "salty", "healthy", "vegan", "vegetarian",
+            "gluten", "keto", "dairy", "calorie", "nutrition", "diet", "flavor", "taste"
+        };
+        for (String term : foodTerms) {
+            if (lower.contains(term)) return true;
+        }
+        return false;
     }
 
     // ── Recommendation Flow ────────────────────────────────────────────────────
