@@ -24,6 +24,17 @@ public interface SpoonacularService {
             @Query("apiKey") String apiKey
     );
 
+    @GET("recipes/complexSearch")
+    Call<RecipeSearchResponse> searchRecipesFiltered(
+            @Query("query") String query,
+            @Query("number") int number,
+            @Query("cuisine") String cuisine,
+            @Query("addRecipeInformation") boolean addRecipeInformation,
+            @Query("diet") String diet,
+            @Query("intolerances") String intolerances,
+            @Query("apiKey") String apiKey
+    );
+
     @GET("recipes/{id}/information")
     Call<RecipeDetail> getRecipeDetail(
             @Path("id") int id,

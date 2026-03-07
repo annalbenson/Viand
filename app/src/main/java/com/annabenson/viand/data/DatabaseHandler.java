@@ -308,6 +308,19 @@ public class DatabaseHandler extends SQLiteOpenHelper implements Serializable {
         database.insertWithOnConflict(TABLE_ACCOUNTS, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
+    public String getDietaryPreferences(int userId) {
+        String select = "SELECT " + DIETARY_PREFS + " FROM " + TABLE_ACCOUNTS +
+                " WHERE " + ACCT_ID + "=?";
+        Cursor cursor = database.rawQuery(select, new String[]{String.valueOf(userId)});
+        if (cursor != null && cursor.moveToFirst()) {
+            String prefs = cursor.getString(0);
+            cursor.close();
+            return prefs != null ? prefs : "";
+        }
+        if (cursor != null) cursor.close();
+        return "";
+    }
+
     public UserAccount loadUserAccount(String email, String password) {
         String select = "SELECT " + ACCT_ID + "," + EMAIL + "," + PASSWORD + "," + NAME + "," +
                 DIETARY_PREFS + " FROM " + TABLE_ACCOUNTS +
