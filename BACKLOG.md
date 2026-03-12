@@ -35,6 +35,10 @@ Items are roughly priority-ordered within each section. Move things around freel
 
 - [ ] Add ability to edit account name post-signup (AccountSettingsActivity already exists, just missing the name field)
 
+## Recipe Book
+
+- [ ] **Recipe book tab** — a pinboard-style tab where users can save recipe links with an optional notes field for each; think Pinterest for recipes
+
 ## Testing / Release
 
 - [ ] Push to release build and test Gemini chat path end-to-end
